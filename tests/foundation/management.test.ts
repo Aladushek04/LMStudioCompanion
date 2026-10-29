@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, mkdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { request as httpRequest } from 'node:http';
@@ -12,6 +12,11 @@ const servers: ManagementServer[] = []; const roots: string[] = [];
 afterEach(async () => { for (const s of servers.splice(0)) await s.close(); for (const p of roots.splice(0)) await rm(p, { recursive: true, force: true }); });
 async function directory() { const path = await mkdtemp(join(tmpdir(), 'companion management кириллица ')); roots.push(path); return path; }
 const report = { lmStudioVersion: 'test', checkedAt: '2026-10-29T10:00:00.000Z', features: { connection: { state: 'verified' as const, evidence: 'Локальная проверка' } } };
+it('refusesStartDuringInstallation', async () => {
+  const root = await directory(); const dir = join(root, 'data/host'); await mkdir(dir, { recursive: true });
+  await writeFile(join(root, '.install-lock'), 'fixture');
+  await expect(startManagementServer(dir, new AbortController().signal, { assets: new Map() })).rejects.toThrow('установ');
+});
 async function host(probe = async (_signal: AbortSignal) => report) {
   const dir = await directory();
   const server = await startManagementServer(dir, new AbortController().signal, { probe, assets: new Map([['/', { content: Buffer.from('<!doctype html><html lang="ru"><title>Панель</title></html>'), type: 'text/html; charset=utf-8' }]]) });

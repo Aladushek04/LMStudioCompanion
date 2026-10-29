@@ -53,6 +53,8 @@ export async function startManagementServer(settingsDir: string, signal: AbortSi
   const release = async () => { if (!released) { released = true; await lock.close(); await rm(lockPath, { force: true }); } };
   try {
     await lock.writeFile(String(process.pid));
+    try { await readFile(join(settingsDir, '../../.install-lock')); throw new Error('Дождитесь окончания установки или удаления.'); }
+    catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
     const settings = new SettingsStore(settingsDir); await settings.readSettings();
     const assets = options.assets ?? await assetsFromBuild();
     const token = randomBytes(32).toString('hex');

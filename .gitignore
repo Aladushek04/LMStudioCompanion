@@ -22,3 +22,5 @@ lmstudio-mcp.json
 !docs/examples/
 .tools/
 .superpowers/
+releases/
+runtime/
