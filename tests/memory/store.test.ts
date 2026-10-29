@@ -131,3 +131,18 @@ it('oversized content and unknown patch fields are refused',async()=>{
   const s=await start(await directory());expect(await s.saveMemory(input('big','x'.repeat(16001)))).toMatchObject({ok:false,code:'INVALID_INPUT'});
   const r=value(await s.saveMemory(input()));expect(await s.updateMemory(r.id,{revision:7} as never,r.revision)).toMatchObject({ok:false,code:'INVALID_INPUT'});
 });
+it('failed initial write releases owner so a clean retry succeeds',async()=>{
+  const dir=await directory();await expect(openMemoryStore(dir,{beforeCommit:async()=>{throw Error('permission denied');}})).rejects.toThrow();
+  const s=await start(dir);expect(await s.listMemories()).toEqual([]);
+});
+it('failed restore retains current records, sessions, revision and valid background tokens',async()=>{
+  let fail=false;const s=await start(await directory(),{beforeCommit:async()=>{if(fail)throw Error('injected rename failure');}});
+  const first=value(await s.saveMemory(input()));const backup=await s.exportBackup();
+  value(await s.updateMemory(first.id,{content:'Current'},first.revision));
+  value(await s.saveMemory({...input('temp'),scope:'session',sessionId:'fixture-session'}));
+  const token=value(await s.beginBackgroundUpdate(first.id));const revision=s.getRevision();
+  fail=true;expect(await s.restoreBackup(backup,revision)).toMatchObject({ok:false,code:'WRITE_FAILED'});
+  expect(s.getRevision()).toBe(revision);expect((await s.getMemory(first.id))?.content).toBe('Current');
+  expect(await s.listMemories({scope:'session'})).toHaveLength(1);
+  expect(await s.applyBackgroundResult(token.token,'Late')).toMatchObject({ok:false,code:'CONFIRMATION_REQUIRED'});
+});

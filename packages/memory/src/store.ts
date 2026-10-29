@@ -1,8 +1,9 @@
 import {randomUUID} from 'node:crypto';
-import {isAbsolute,join} from 'node:path';
-import {mkdir,lstat,realpath,readdir} from 'node:fs/promises';
+import {join} from 'node:path';
+import {readdir} from 'node:fs/promises';
 import type {OperationResult} from '../../core/src/contracts.js';
 import {acquireMemoryOwnership} from './ownership.js';
+import {prepareMemoryDirectory} from './local-directory.js';
 import {decodeSnapshot,encodeSnapshot,readSnapshot,writeRollback,writeSnapshot} from './persistence.js';
 import {identity,memoryInputSchema,memoryPatchSchema,memoryRecordSchema,filterSchema,type MemoryRecord,type MemoryInput,type MemoryPatch,type MemoryFilter,type Snapshot} from './types.js';
 export type {MemoryRecord} from './types.js';
@@ -96,9 +97,7 @@ export class MemoryStore {
   }
 }
 export async function openMemoryStore(directory:string,options:StoreOptions={}):Promise<MemoryStore>{
-  if(!isAbsolute(directory)||directory.startsWith('\\\\'))throw new Error('Нужен отдельный абсолютный локальный каталог памяти.');
-  await mkdir(directory,{recursive:true});const stat=await lstat(directory);if(!stat.isDirectory()||stat.isSymbolicLink())throw new Error('Каталог памяти не должен быть ссылкой.');
-  const canonical=await realpath(directory);const release=await acquireMemoryOwnership(canonical);
+  const canonical=await prepareMemoryDirectory(directory);const release=await acquireMemoryOwnership(canonical);
   try{
     let snapshot:Snapshot;
     try{snapshot=await readSnapshot(join(canonical,'memory.json'));}

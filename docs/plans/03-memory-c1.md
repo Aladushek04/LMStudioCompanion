@@ -38,19 +38,19 @@
 
 ## Task 1: тесты и хранение
 
-**Files:** `packages/memory/src/types.ts`, `ownership.ts`, `persistence.ts`, `store.ts`; `tests/memory/store.test.ts`; регистрация в tsconfig/build/Vitest.
+**Files:** `packages/memory/src/types.ts`, `ownership.ts`, `local-directory.ts`, `persistence.ts`, `store.ts`; `tests/memory/store.test.ts`; регистрация в tsconfig/build/Vitest.
 
-- [ ] RED: CRUD/restart и отдельное состояние session; ожидается отсутствие модуля.
-- [ ] GREEN: строгие типы, сериализация, атомарная фиксация, копии результатов, single writer, revision/conflict.
-- [ ] RED → GREEN: stale edit, late background, забытый устойчивый ключ, explicit revive, сохранение приоритета после restart.
-- [ ] RED → GREEN: отказ до rename оставляет старые RAM/диск; повреждение не сбрасывает данные; backup/restore сохраняет metadata и инвалидирует токены.
-- [ ] Проверить отдельным дочерним процессом: kill до commit оставляет прежний snapshot; kill после успеха оставляет новый; Windows lease освобождается без удаления PID-файла.
+- [x] RED: CRUD/restart и отдельное состояние session; ожидается отсутствие модуля.
+- [x] GREEN: строгие типы, сериализация, атомарная фиксация, копии результатов, single writer, revision/conflict.
+- [x] RED → GREEN: stale edit, late background, забытый устойчивый ключ, explicit revive, сохранение приоритета после restart.
+- [x] RED → GREEN: отказ до rename оставляет старые RAM/диск; повреждение не сбрасывает данные; backup/restore сохраняет metadata и инвалидирует токены.
+- [x] Проверить отдельным дочерним процессом: kill до commit оставляет прежний snapshot; kill после успеха оставляет новый; Windows lease освобождается без удаления PID-файла.
 
 ## Task 2: итоговая проверка и отчёт
 
-- [ ] Полный Vitest, typecheck и build. Модели/API LM Studio не нужны.
-- [ ] Независимое ревью всего среза C1; исправить существенные замечания с регрессионной проверкой.
-- [ ] Записать конкретные результаты, обновить контракт плана 03 и статус C1. Commit/push и остановка перед C2.
+- [x] Полный Vitest, typecheck и build. Модели/API LM Studio не нужны.
+- [x] Независимое ревью всего среза C1; исправить существенные замечания с регрессионной проверкой.
+- [x] Записать конкретные результаты, обновить контракт плана 03 и статус C1. Commit/push и остановка перед C2.
 
 ## Review Focus
 
