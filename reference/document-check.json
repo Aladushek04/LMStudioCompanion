@@ -1,0 +1,10 @@
+{
+  "documentsChecked": 16,
+  "plansChecked": 6,
+  "missingLinks": [],
+  "invalidUtf8Content": [],
+  "planStructureErrors": [],
+  "forbiddenFiles": [],
+  "ok": true,
+  "scope": "documentation and source-copy checks only; application tests not run"
+}

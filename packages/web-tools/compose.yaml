@@ -1,0 +1,42 @@
+name: lmstudio-web
+services:
+  searxng:
+    image: ${SEARXNG_IMAGE:-docker.io/searxng/searxng@sha256:268a4b460136dcefc8f2e896b6098ba3f770c8218dbbddcb86811b06b06816f1}
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${SEARXNG_PORT:-8088}:8080"
+    environment:
+      SEARXNG_SECRET: ${SEARXNG_SECRET:?Run Setup.ps1 first}
+    volumes:
+      - ./searxng/settings.yml:/etc/searxng/settings.yml:ro
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 512m
+    cpus: 1.0
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/healthz', timeout=5)"]
+      interval: 10s
+      timeout: 6s
+      retries: 12
+  mcp:
+    profiles: [tools]
+    image: lmstudio-web-mcp:1.1.0
+    build: .
+    init: true
+    stdin_open: true
+    environment:
+      SEARXNG_URL: ${SEARXNG_URL:-http://searxng:8080}
+      BROWSER_ENABLED: ${BROWSER_ENABLED:-true}
+      HOME: /tmp
+      LM_STUDIO_URL: ${LM_STUDIO_URL:-http://host.docker.internal:1234}
+      LM_STUDIO_MODEL: ${LM_STUDIO_MODEL:-}
+      LM_STUDIO_API_TOKEN: ${LM_STUDIO_API_TOKEN:-}
+    read_only: true
+    tmpfs:
+      - /tmp:size=384m,mode=1777
+    shm_size: 256m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 2g
+    cpus: 2.0
+    stop_grace_period: 5s

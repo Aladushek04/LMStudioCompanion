@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "rootDir": "packages", "outDir": "dist", "declaration": true },
+  "include": ["packages/core/src/**/*.ts", "packages/host/src/**/*.ts", "packages/lmstudio-plugin/src/**/*.ts"]
+}

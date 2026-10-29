@@ -1,0 +1,12 @@
+{
+  "version": "0.1.0",
+  "project": "G:\\Projects\\LMStudioCompanion",
+  "advisorFiles": 13,
+  "allSourceHashesMatch": true,
+  "testsPassed": 21,
+  "uiSmokePassed": true,
+  "installedWindowOpened": true,
+  "cancellationVerified": true,
+  "modelSettingsChanged": false,
+  "scope": "read-only memory estimates; no application or benchmarks"
+}

@@ -1,0 +1,18 @@
+{
+  "version": "0.1.0",
+  "files": {
+    "Advisor.exe": "519b3685e4a2c9788ed2b70328d866f335b8bbeaea8de25e5d2438cba9a39bbc",
+    "Advisor.exe.config": "6e815c6d1f7e9adbe60bb3375a5e16047cc03c3a61fbece9a5e381f2eacc188a",
+    "AdvisorHost.cs": "5a4528facea8d919f3823a47c28655dfaf125e52b549b9206c46140e9e1a14c4",
+    "Advisor.ps1": "ab2dd68b17757544d2dbf3c6d74f87391cca26930d9191c37ad9bbc6fd574b14",
+    "Advisor.Core.psm1": "68f51e294ed94ab021885e41fe9e8ebe1b1dd7255b53873e13a0c94e5d862a46",
+    "Advisor.Worker.ps1": "6e0ce360db2614ef9a335e46d00dd9e080100b36f4ab57ee10cc51ef70f59c45",
+    "Build.ps1": "4a3ecd17fbe189a280b340d21f34b5959224334829136e2a270fa8b50684c04c",
+    "Start-Advisor.cmd": "58dc6227cae78ddb54f15fd77c6aae1ef1d8b2c7f247a5455f4bcfdc31f1c83c",
+    "README.md": "777b14e375172dd1d64695ce49110e9b530a18d2c38a51d4507bb0e6eba776d5",
+    ".gitignore": "b25b967c971cbf6ba70789d57a1b1176eb763dd1ddef02315508ad14a0b1b705",
+    "tests/Run-Tests.ps1": "884e48da883c28f219f900cd8013c29863ed530166a83ccb92341a14736640fa",
+    "tests/Echo-Arguments.ps1": "4dc0a12d36e36d32513c22baffeae934e854f785cf7b01c54091f261ebf598c4",
+    "tests/Hold-Pipes.ps1": "21dd4c84a4c47790ccd0d2bebc19f1b500fa66dbb609e6dcc7f0d35da199882a"
+  }
+}

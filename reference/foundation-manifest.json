@@ -1,0 +1,28 @@
+{
+  "scope": "foundation task 1 read-only slice; excludes dependencies, builds and user runtime data",
+  "files": {
+    ".gitignore": "3c5536969c73f80883e9e4ec5d3b361fae8778596b0eedbc62fadd8bc0d5f606",
+    "package.json": "55ed092ac1f72a110562e9df570a431ae4c00592b58263a536a974cffd81fcca",
+    "package-lock.json": "aa7c7d07ddbf6a06cb7156832c9656e2af900a671ace53afcccbbc61d40577b5",
+    "tsconfig.json": "17e98b1b957d0177641a38cbd071b28deb481a760d5161787fa2462f8e24cfe5",
+    "tsconfig.build.json": "970b9add65c905033709dbed82faec1a89b86088c867a3b34d27897e8cf1c62b",
+    "vitest.config.ts": "9b6f1eb7bcb9459f994d1ecbd271be31179f43d61bce3043013822345fa96fe7",
+    "Diagnose-Companion.cmd": "66d8714d159f87ccc1867205b0de3e120d565cc2fe6d9c49ea4f3094e393a8c9",
+    "README.md": "212c3a4213922e35f824b877fd914a471b7ebc073183a4e8be63ebef3b9d9908",
+    "docs/DESIGN.md": "7e22a31521a49b78565e97021c74e037f541939afda2c7b5b99079e66f328a65",
+    "docs/ROADMAP.md": "d95541b69b81cb553345e032bb2c6ecc431e6ef8a9691eaeb4dd97d7fbe9b514",
+    "docs/plans/00-foundation.md": "cd61dcef504c526f2e4ff1dc97a1b9041201ffd8dcf81aac85a9539bf5d4dada",
+    "docs/research/capability-report.md": "b269983a0ea25d26c05913e1d879055da294bdad0b2d06422389e964f5b22108",
+    "docs/research/foundation-progress.md": "6e4f63f992f15458b7e62aa8a6ab608f8d8479e0b3cd002322e1462c533018a9",
+    "packages/host/README.md": "1e8d0d0f45d1e9fc6a2312f3e4e8b85f9842c30ee6911b305907885a94455706",
+    "packages/core/src/contracts.ts": "055e8ca43a059f1ee1480141ef59703de518db6fc2621593d31890637ef0dbd4",
+    "packages/host/src/capabilities.ts": "8b342870966df5b361fbcb73fa633c3c6f9f7b599993cdb3155e86097dd3eea9",
+    "packages/host/src/diagnose.ts": "d974b557b250eaf58a224ea0a94b6ae658ea6be577ccabe9b52a56108b6f2396",
+    "packages/host/src/installation.ts": "d22388eec3225f34e49ea9889a4d16287d5739db3bb4563451f0b5b344947795",
+    "packages/lmstudio-plugin/src/integration.ts": "e4d3ea83172de70193516345fe304dc029b7e88aab5135b6b9d3d64880456201",
+    "tests/foundation/capabilities.test.ts": "557b990ea94ea3803392c0bbca770cb1886147d61970f6b3accdf31dc776b80c",
+    "tests/foundation/contracts.test.ts": "d8b7af3189dd71d8fa3b68ca7ac74524237420f20fa3f6e6ad26f5b344f379db",
+    "tests/foundation/diagnose.test.ts": "17e015031aa8fbb9fae0a1fc84069830a3241819e16988acbb8f8fcefa54359e",
+    "tests/foundation/installation.test.ts": "f685ba6b8307de083cfdc1943c23132273f9a97486fe178d643e9cf19433b386"
+  }
+}

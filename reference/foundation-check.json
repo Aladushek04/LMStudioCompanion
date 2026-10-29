@@ -1,0 +1,16 @@
+{
+  "testsPassed": 32,
+  "testFramework": "Vitest 3.2.7",
+  "typecheckPassed": true,
+  "buildPassed": true,
+  "documentsChecked": 23,
+  "brokenLocalLinks": [],
+  "advisorSourceFilesVerified": 13,
+  "webSourceFilesVerified": 30,
+  "installedReferenceFilesVerified": 4,
+  "sourceFilesInManifest": 23,
+  "generationRequestsMadeByDiagnostic": false,
+  "modelMutationRequestsMadeByDiagnostic": false,
+  "runtimeCompatibility": "unknown",
+  "wholeFoundationStageComplete": false
+}

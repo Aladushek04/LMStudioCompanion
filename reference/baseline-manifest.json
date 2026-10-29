@@ -1,0 +1,136 @@
+{
+  "baseline": "lmstudio-web 1.1.0",
+  "capturedAt": "2026-10-28T23:01:46.742239+00:00",
+  "source": "C:\\Users\\isoko\\Documents\\Codex\\2026-10-29\\x20\\outputs\\lmstudio-web",
+  "destination": "packages/web-tools",
+  "files": [
+    {
+      "path": ".dockerignore",
+      "sha256": "244f716996d6e05382f2e06898df73b9f8b085829767f2a1b807af1cc8170a09"
+    },
+    {
+      "path": ".gitignore",
+      "sha256": "1d7be5933b70c50352ee4c9fbd1654e30987aa8ae62c2da29e32e4a63737290b"
+    },
+    {
+      "path": "compose.yaml",
+      "sha256": "cb5311108c904c2446b14ba2e1cef956f6d60ae872978fdf19dd68071910fa72"
+    },
+    {
+      "path": "diagnostics.py",
+      "sha256": "0f4a5e2ddd5218e73c45ed41db43084001d2c7ea23678d329524797b4bef6d2c"
+    },
+    {
+      "path": "Dockerfile",
+      "sha256": "19007c0f38c47669dd794cad3a5f9fa38e4beacb54f4e6195ae34ccda5ff1734"
+    },
+    {
+      "path": "Install.cmd",
+      "sha256": "3aa12c1e051479f60facb3594009e7a1b71edf5a7b68d55b7bd790ad8bb7ec3b"
+    },
+    {
+      "path": "pyproject.toml",
+      "sha256": "4aba345e963b2f175e6353cca6d849931be658da1d145f7db42f1d10a1bb8e3c"
+    },
+    {
+      "path": "README.md",
+      "sha256": "5ab1de67cd803dec2047d05d23f14a82d48482abd449518db35c28f5d7967f2e"
+    },
+    {
+      "path": "requirements-dev.txt",
+      "sha256": "4670f494d160fb4748f470bbe201f3c5d4b1404782bbc4574ac1181fa5eccce2"
+    },
+    {
+      "path": "requirements.txt",
+      "sha256": "6312c3a084d6013cb6ccd645bf2f7760e170a1ed0ed770b9818ec596d3d073e9"
+    },
+    {
+      "path": "searxng/settings.yml",
+      "sha256": "ac9370306ce8f859ac5c6e44fcff9ffb6b323e67e6afc705b9df706d3a2aa8fa"
+    },
+    {
+      "path": "Setup.ps1",
+      "sha256": "de6bbdfb0d004ff79a7a09177067a5eeddb023902cca5cb275c6838174c83e81"
+    },
+    {
+      "path": "TEST-REPORT.md",
+      "sha256": "d51b82a31d1b6fa4b5c6a1d3e8fb03a8e18a4276ced572483defc92b7fa33846"
+    },
+    {
+      "path": "Test.ps1",
+      "sha256": "1d8ca8078dd33d14fa1b89aefdf42b747b7484670282f2d8c454468b2d72bfdc"
+    },
+    {
+      "path": "tests/live_gemma.py",
+      "sha256": "f849beec0c1ec442b948c946777a84c834089357bd3b8523ea3f4ad31773c6ea"
+    },
+    {
+      "path": "tests/live_visual.py",
+      "sha256": "8c2e61989ff654455d87253bce502cc717f336c27c4f01040b17e62857a0067d"
+    },
+    {
+      "path": "tests/test_browser.py",
+      "sha256": "22e3955e3249b768675b735fe541c6cdd78256b7586ebcc965ea484d1bbe24dc"
+    },
+    {
+      "path": "tests/test_content.py",
+      "sha256": "3e4dc958c182b65c9716de54f5fd21d5439531a73416b7f1c19f83ded46994dc"
+    },
+    {
+      "path": "tests/test_network.py",
+      "sha256": "2cfa8a9639d9dd7f39ac56171bb21a93ceab24c175d5f3b26e0d9edd6740e5a4"
+    },
+    {
+      "path": "tests/test_tools.py",
+      "sha256": "c1196a62bc6ad3a2aaab0559942efc6f4ba949fd44736938e1e71bf48123f126"
+    },
+    {
+      "path": "tests/test_visual.py",
+      "sha256": "eb2f421a0b05ff7ead1ea4641b0174dffdafedfb285429a4b5ea0e33eb767538"
+    },
+    {
+      "path": "webtools/__init__.py",
+      "sha256": "8601c0f936c3242ce910770325cf6f9ad0641e6481adbdd1b43c474d63b7ddfb"
+    },
+    {
+      "path": "webtools/browser.py",
+      "sha256": "be107b549b801d8c31d43cbff0432bee87e028b8a3592c4b0e135e474094929b"
+    },
+    {
+      "path": "webtools/content.py",
+      "sha256": "a8104c32eb9bacca26821ac5914fb52de73aa9455d084685ddd89161454ffee0"
+    },
+    {
+      "path": "webtools/images.py",
+      "sha256": "a2c847513ebfe4d94c4bf550b5ee9ef34c5accd81da2e9c841b9502ae0bad8e4"
+    },
+    {
+      "path": "webtools/network.py",
+      "sha256": "9090aabf119f028cab6afd65af9889869b5fc5a99e05e2f56caf0be4c40ebb72"
+    },
+    {
+      "path": "webtools/search.py",
+      "sha256": "3184f1ccb9151883dffd7a4af0605d76c2930f48235e236f3690c12bf762c754"
+    },
+    {
+      "path": "webtools/server.py",
+      "sha256": "f89873cd56ea6e8045b9121b9b4730a3e22f94ea69f7d1a1adde99da193d9a25"
+    },
+    {
+      "path": "webtools/service.py",
+      "sha256": "ac4a6e7b12e239f67f2b415b844aac1eb7799fe4804dfdcb95d6f8219d63b374"
+    },
+    {
+      "path": "webtools/visual.py",
+      "sha256": "2356b0e0a54db1ae0f2b8f55c494f548c30a7099ff9d6004f464f6d9f6a9e380"
+    }
+  ],
+  "excluded": [
+    ".env",
+    "lmstudio-mcp.json",
+    "databases",
+    "chats",
+    "caches"
+  ],
+  "applicationTestsRerun": false
+}
