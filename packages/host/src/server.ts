@@ -62,7 +62,8 @@ export async function startManagementServer(settingsDir: string, signal: AbortSi
     const respond = (res: ServerResponse, code: number, value: unknown) => {
       if (!res.destroyed) { res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8' }); res.end(JSON.stringify(value)); }
     };
-    server.on('request', async (req, res) => {
+    const pending = new Set<Promise<void>>();
+    const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
       res.setHeader('Cache-Control', 'no-store'); res.setHeader('X-Content-Type-Options', 'nosniff');
       res.setHeader('Referrer-Policy', 'no-referrer'); res.setHeader('X-Frame-Options', 'DENY');
       res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");
@@ -105,12 +106,16 @@ export async function startManagementServer(settingsDir: string, signal: AbortSi
         if (status === 413) res.setHeader('Connection', 'close');
         respond(res, status, { message: error instanceof HttpError ? error.message : 'Не удалось выполнить операцию. Предыдущие данные сохранены.' });
       }
+    };
+    server.on('request', (req, res) => {
+      const operation = handleRequest(req, res); pending.add(operation);
+      void operation.then(() => pending.delete(operation), () => pending.delete(operation));
     });
     let closing: Promise<void> | undefined;
     const close = () => closing ??= (async () => {
       shutdown.abort(); signal.removeEventListener('abort', onAbort);
       const stopped = new Promise<void>(resolve => server.close(() => resolve())); server.closeAllConnections();
-      await stopped; await release();
+      await stopped; await Promise.allSettled([...pending]); await release();
     })();
     const onAbort = () => { void close(); }; signal.addEventListener('abort', onAbort, { once: true });
     if (signal.aborted) await close();

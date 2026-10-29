@@ -109,3 +109,15 @@ it('preventsTwoHostsFromWritingSameSettingsDirectory', async () => {
   await s.close();
   const next = await startManagementServer(s.dir, new AbortController().signal, { port: 0, assets: new Map() }); servers.push(next);
 });
+it('shutdownWaitsForOperationsBeforeReleasingSettingsOwnership', async () => {
+  let started = false; let cleaned = false;
+  const s = await host(async signal => {
+    started = true;
+    await new Promise<void>(resolve => signal.addEventListener('abort', () => setTimeout(() => { cleaned = true; resolve(); }, 80), { once: true }));
+    signal.throwIfAborted(); return report;
+  });
+  const pending = fetch(s.origin + '/api/diagnostics', { method: 'POST', headers: headers(s) }).catch(() => null);
+  for (let n = 0; n < 100 && !started; n++) await new Promise(resolve => setTimeout(resolve, 5));
+  expect(started).toBe(true); await s.close();
+  expect(cleaned).toBe(true); await pending;
+});

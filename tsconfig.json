@@ -8,7 +8,8 @@
     "exactOptionalPropertyTypes": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "types": ["node"]
+    "types": ["node"],
+    "jsx": "react-jsx"
   },
-  "include": ["packages/core/src/**/*.ts", "packages/host/src/**/*.ts", "packages/lmstudio-plugin/src/**/*.ts", "tests/foundation/**/*.ts", "vitest.config.ts"]
+  "include": ["packages/core/src/**/*.ts", "packages/host/src/**/*.ts", "packages/lmstudio-plugin/src/**/*.ts", "packages/control-panel/src/**/*.ts", "packages/control-panel/src/**/*.tsx", "tests/foundation/**/*.ts", "vitest.config.ts"]
 }
