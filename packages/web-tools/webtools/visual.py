@@ -2,6 +2,7 @@
 
 import asyncio
 import base64
+import hashlib
 import io
 import warnings
 from dataclasses import dataclass
@@ -11,6 +12,7 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 
 from .content import extract_page
 from .network import FetchError
+from .results import classify_read, fetched_result, make_source_result
 
 
 @dataclass(frozen=True)
@@ -176,7 +178,18 @@ class VisualTools:
         image = await asyncio.to_thread(prepare_image, fetched.body)
         result = await self.vision.analyze(image, question)
         return {
+            **make_source_result(
+                requested_url=url,
+                final_url=fetched.url,
+                status="ok",
+                kind="web_visual",
+                http_status=fetched.status,
+                content_hash=hashlib.sha256(fetched.body).hexdigest(),
+            ),
             "kind": "web_image",
+            "source_kind": "web_visual",
+            "status": "ok",
+            "interpretation": result["analysis"],
             "source_url": fetched.url,
             **result,
             "display_hint": "An image preview follows. To show it in the final answer, use the local Markdown reference supplied by LM Studio; do not invent filenames.",
@@ -188,15 +201,33 @@ class VisualTools:
         if not 0 <= scroll_y <= 50000:
             raise ValueError("scroll_y must be 0..50000 pixels.")
         capture = await self.browser.capture(url, scroll_y)
-        if capture.fetched.status >= 400:
-            raise FetchError(
-                f"Page returned HTTP {capture.fetched.status}; no successful page screenshot is available."
-            )
-        image = await asyncio.to_thread(prepare_image, capture.screenshot)
         page = extract_page(capture.fetched.text, capture.fetched.url)
+        status = classify_read(capture.fetched.status, page.text, page.title)
+        if status in {"blocked", "error"}:
+            return {
+                **fetched_result(url, capture.fetched, page, status),
+                "kind": "page_screenshot",
+                "source_kind": "web_visual",
+                "pixels_sent": False,
+                "interpretation": None,
+            }, None
+        image = await asyncio.to_thread(prepare_image, capture.screenshot)
         result = await self.vision.analyze(image, question)
         return {
+            **make_source_result(
+                requested_url=url,
+                final_url=page.url,
+                status="ok",
+                kind="web_visual",
+                http_status=capture.fetched.status,
+                text=page.text[:1500],
+                title=page.title,
+                content_hash=hashlib.sha256(capture.screenshot).hexdigest(),
+            ),
             "kind": "page_screenshot",
+            "source_kind": "web_visual",
+            "status": "partial" if capture.warnings else "ok",
+            "interpretation": result["analysis"],
             "source_url": page.url,
             "title": page.title,
             "viewport": capture.viewport,
