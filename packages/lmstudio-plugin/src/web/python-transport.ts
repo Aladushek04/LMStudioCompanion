@@ -2,7 +2,7 @@ import { spawn, execFile } from 'node:child_process';
 import type { WebAdapter } from './orchestrator.js';
 export class WebTransportError extends Error {}
 
-export interface PythonTransportOptions { python: string; root: string; searchUrl: string; browser: string }
+export interface PythonTransportOptions { python: string; root: string; searchUrl: string; browser: string; visionModel?: string }
 /** Own read-only backend, independent of user's MCP configuration. */
 export function pythonTransport(options: PythonTransportOptions): WebAdapter {
   return {
@@ -32,7 +32,7 @@ export function pythonTransport(options: PythonTransportOptions): WebAdapter {
         else {try{resolve(JSON.parse(output));}catch{reject(new Error('Некорректный результат веб-обработки.'));}}
       });
       child.stdin.on('error',()=>undefined);
-      child.stdin.end(JSON.stringify({name,args,search_url:options.searchUrl,browser:options.browser}));
+      child.stdin.end(JSON.stringify({name,args,search_url:options.searchUrl,browser:options.browser,vision_model:options.visionModel}));
       if(signal.aborted)stop();
     }),
   };

@@ -9,11 +9,14 @@ from .network import SafeFetcher
 from .results import failed_result
 from .search import SearxClient
 from .service import WebTools
+from .visual import VisionClient, VisualTools
 
 
 async def execute(request):
     name = request["name"]
     args = request["args"]
+    if name == "inspect_image" and not request.get("vision_model"):
+        raise ValueError("Не подтверждена выбранная vision-модель.")
     fetcher = SafeFetcher()
     tools = WebTools(
         SearxClient(request["search_url"]),
@@ -29,8 +32,16 @@ async def execute(request):
                     return await tools.read(args["url"], max_chars=6000)
                 except Exception as exc:
                     return failed_result(args["url"], exc)
-            # Nested vision generation is gated until cancellation/Parallel=1 is proven.
-            raise ValueError("Визуальное чтение в адаптере ещё не подтверждено.")
+            if name == "inspect_image":
+                vision = VisionClient("http://127.0.0.1:1234", model_id=request["vision_model"])
+                image_fetcher = SafeFetcher(max_bytes=8_000_000)
+                try:
+                    result, _image = await VisualTools(image_fetcher, tools.browser, vision).inspect_image(args["url"], args["question"])
+                    return result
+                finally:
+                    await image_fetcher.aclose()
+                    await vision.aclose()
+            raise ValueError("Неизвестное действие веб-обработки.")
     finally:
         await tools.aclose()
 

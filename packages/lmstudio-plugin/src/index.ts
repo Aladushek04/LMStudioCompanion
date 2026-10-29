@@ -26,7 +26,8 @@ export async function preprocess(ctl: PromptPreprocessorController, message: Cha
     try { await wait(access(join(root,'webtools','companion_bridge.py'))); } catch { signal.throwIfAborted(); throw new Error('Не найдена веб-обработка. Нужна папка packages\\web-tools с файлом webtools\\companion_bridge.py.'); }
     const source=await wait(ctl.tokenSource());
     if(!('countTokens' in source)||!('getContextLength' in source)||!('applyPromptTemplate' in source))throw new Error('Нужна локальная модель с поддержанным токенизатором.');
-    const turn=new WebTurn({turnId:randomUUID(),chatScopeId:null,projectId:null,sessionId:null,mode:'auto',signal},{maxQueries:mode==='research'?10:1,maxPages:mode==='research'?6:3,maxRepairs:1,deadlineMs:90000},pythonTransport({python,root,searchUrl:settings.get('searchUrl'),browser:settings.get('browser')}));
+    const visionModel='vision' in source && source.vision===true && 'identifier' in source ? source.identifier : '';
+    const turn=new WebTurn({turnId:randomUUID(),chatScopeId:null,projectId:null,sessionId:null,mode:'auto',signal},{maxQueries:mode==='research'?10:1,maxPages:mode==='research'?6:3,maxRepairs:1,deadlineMs:90000},pythonTransport({python,root,searchUrl:settings.get('searchUrl'),browser:settings.get('browser'),visionModel}));
     return await preprocessWeb(message,{
       mode,showSources:config.get('showSources'),signal,contextLength:await wait(source.getContextLength()),
       read:plan=>turn.run(plan),registry:turn.registry,
@@ -34,8 +35,8 @@ export async function preprocess(ctl: PromptPreprocessorController, message: Cha
       status:(text,failed)=>status.setState({status:failed?'error':'done',text}),
     });
   } catch(error) {
-    const text=error instanceof Error?error.message:'Веб-проверка не завершена.';
-    status.setState({status:'error',text}); throw error;
+    const text=ctl.abortSignal.aborted?'Веб-проверка отменена.':signal.aborted?'Истекло время веб-проверки.':error instanceof Error?error.message:'Веб-проверка не завершена.';
+    status.setState({status:'error',text}); throw new Error(text);
   }
 }
 export async function main(context: PluginContext) {

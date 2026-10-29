@@ -1,5 +1,7 @@
 # Надёжный веб и автоматический выбор инструментов — Implementation Plan
 
+Приёмка 2026-10-30: пользовательский выпуск B выполнен в режиме препроцессора; [итоговый отчёт и явные отличия от расширенного плана](../research/stage-b-completion.md). Неотмеченные расширенные пункты ниже не выдаются за реализованные функции.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Пользователь пишет обычный вопрос, а система выбирает чтение/поиск, ограниченно исправляет вызовы и честно показывает сбои.

@@ -1,0 +1,133 @@
+{
+  "checkedAt": "2026-10-29T22:13:57.425Z",
+  "channel": "headless: same preprocessor and backend + real already-loaded model; native compressor UI checked separately",
+  "readings": [
+    {
+      "index": 1,
+      "calls": 1,
+      "status": "ok",
+      "sourceHash": "a44a447b78d23d793296510d913f20676c7dfe2ebf66ddbfd2cb24be3337ee7a",
+      "generated": true,
+      "markerMatched": true,
+      "error": null
+    },
+    {
+      "index": 2,
+      "calls": 1,
+      "status": "ok",
+      "sourceHash": "08301adc1b101eada636ac578de4c084a55e7b1eb32bc5ca007828a9c664e837",
+      "generated": true,
+      "markerMatched": true,
+      "error": null
+    },
+    {
+      "index": 3,
+      "calls": 1,
+      "status": "ok",
+      "sourceHash": "7b851906fabec4e1c86c5a5a6564283105c6cabcc87610c4b5644f626d927bcf",
+      "generated": true,
+      "markerMatched": true,
+      "error": null
+    },
+    {
+      "index": 4,
+      "calls": 1,
+      "status": "ok",
+      "sourceHash": "bbdcf3b11b919414ddd693436f5f69b5c654957e2dc1f8e3a5ab9197a9e78bc6",
+      "generated": true,
+      "markerMatched": true,
+      "error": null
+    },
+    {
+      "index": 5,
+      "calls": 1,
+      "status": "ok",
+      "sourceHash": "8a172706e708516c4c1997aac5b74a947357336c80f2abb269094f2858798254",
+      "generated": true,
+      "markerMatched": true,
+      "error": null
+    },
+    {
+      "index": 6,
+      "calls": 1,
+      "status": "ok",
+      "sourceHash": "c00ee9fc2969d1433ffbb9a66a8076462a7a36025ab72dbf6e7c47e9252b0916",
+      "generated": true,
+      "markerMatched": true,
+      "error": null
+    },
+    {
+      "index": 7,
+      "calls": 1,
+      "status": "ok",
+      "sourceHash": "2665bcd6fd39bb0e008146db8852dff4f1458237ebd7eae31160ed8cc7173d1f",
+      "generated": true,
+      "markerMatched": true,
+      "error": null
+    },
+    {
+      "index": 8,
+      "calls": 1,
+      "status": "ok",
+      "sourceHash": "2c199a32532d746d09625d3156596acfbfbee8a6cff8341fb870dce88ad4e58b",
+      "generated": true,
+      "markerMatched": true,
+      "error": null
+    },
+    {
+      "index": 9,
+      "calls": 1,
+      "status": "ok",
+      "sourceHash": "fc1800f3e70811c8ae255ef83c36232372193d0467964773a7dc3dd385bc3a95",
+      "generated": true,
+      "markerMatched": true,
+      "error": null
+    },
+    {
+      "index": 10,
+      "calls": 1,
+      "status": "ok",
+      "sourceHash": "d3ade3162165ec296b8e1fa3d96d6daf690c2154586fd72900bb331cd16ad3af",
+      "generated": true,
+      "markerMatched": true,
+      "error": null
+    }
+  ],
+  "blocked": [
+    {
+      "httpStatus": 401,
+      "calls": 1,
+      "sourceStatus": "blocked",
+      "generated": false,
+      "error": "Источник заблокировал доступ. https://httpbin.org/status/401 Содержимое не прочитано; пересказ по адресу не выполняется."
+    },
+    {
+      "httpStatus": 403,
+      "calls": 1,
+      "sourceStatus": "blocked",
+      "generated": false,
+      "error": "Источник заблокировал доступ. https://httpbin.org/status/403 Содержимое не прочитано; пересказ по адресу не выполняется."
+    },
+    {
+      "httpStatus": 407,
+      "calls": 1,
+      "sourceStatus": "blocked",
+      "generated": false,
+      "error": "Источник заблокировал доступ. https://httpbin.org/status/407 Содержимое не прочитано; пересказ по адресу не выполняется."
+    },
+    {
+      "httpStatus": 429,
+      "calls": 1,
+      "sourceStatus": "blocked",
+      "generated": false,
+      "error": "Источник заблокировал доступ. https://httpbin.org/status/429 Содержимое не прочитано; пересказ по адресу не выполняется."
+    },
+    {
+      "httpStatus": 451,
+      "calls": 1,
+      "sourceStatus": "blocked",
+      "generated": false,
+      "error": "Источник заблокировал доступ. https://httpbin.org/status/451 Содержимое не прочитано; пересказ по адресу не выполняется."
+    }
+  ]
+}
