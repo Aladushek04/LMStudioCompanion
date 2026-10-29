@@ -29,6 +29,7 @@ class Fetched:
     status: int
     headers: dict[str, str]
     body: bytes
+    warnings: tuple[str, ...] = ()
 
     @property
     def text(self) -> str:

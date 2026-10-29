@@ -1,5 +1,5 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
-import { mkdir, open, rm, readdir, readFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile } from 'node:fs/promises';
 import { join, extname } from 'node:path';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
@@ -9,6 +9,7 @@ import { settingsSchema } from '../../core/src/settings.js';
 import { SettingsStore } from './settings.js';
 import { probeCapabilities } from './capabilities.js';
 import { selectIntegration } from '../../lmstudio-plugin/src/integration.js';
+import { acquireSettingsOwnership } from './ownership.js';
 
 export interface Asset { content: Buffer; type: string }
 export interface ManagementServer { origin: string; token: string; close(): Promise<void> }
@@ -44,15 +45,9 @@ function bodyJson(req: IncomingMessage, signal: AbortSignal): Promise<unknown> {
 /** Loopback management API; токен запуска не выводится в журнал и не включается в HTML. */
 export async function startManagementServer(settingsDir: string, signal: AbortSignal, options: ServerOptions = {}): Promise<ManagementServer> {
   signal.throwIfAborted(); await mkdir(settingsDir, { recursive: true });
-  const lockPath = join(settingsDir, '.host-lock');
-  const lock = await open(lockPath, 'wx', 0o600).catch((error: NodeJS.ErrnoException) => {
-    if (error.code === 'EEXIST') throw new Error('Панель уже запущена или остался файл блокировки. Закройте прежний процесс; инструкция восстановления — в USER-GUIDE.');
-    throw new Error('Не удалось создать блокировку папки настроек. Проверьте права записи и свободное место на диске.');
-  });
-  let released = false;
-  const release = async () => { if (!released) { released = true; await lock.close(); await rm(lockPath, { force: true }); } };
+  const release = await acquireSettingsOwnership(settingsDir);
   try {
-    await lock.writeFile(String(process.pid));
+    signal.throwIfAborted();
     try { await readFile(join(settingsDir, '../../.install-lock')); throw new Error('Дождитесь окончания установки или удаления.'); }
     catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
     const settings = new SettingsStore(settingsDir); await settings.readSettings();

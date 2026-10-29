@@ -2,7 +2,7 @@
 
 import asyncio
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 from playwright.async_api import Error as PlaywrightError
 from playwright.async_api import TimeoutError as PlaywrightTimeout
@@ -20,8 +20,9 @@ class PageCapture:
 
 
 class ChromiumReader:
-    def __init__(self, fetcher: SafeFetcher):
+    def __init__(self, fetcher: SafeFetcher, executable_path=None):
         self.fetcher = fetcher
+        self.executable_path = executable_path
         self.slot = asyncio.Semaphore(1)
 
     async def render(self, url: str) -> Fetched:
@@ -36,6 +37,7 @@ class ChromiumReader:
             async with asyncio.timeout(30), self.slot, async_playwright() as driver:
                 browser = await driver.chromium.launch(
                     headless=True,
+                    executable_path=self.executable_path,
                     args=[
                         "--host-resolver-rules=MAP * ~NOTFOUND",
                         "--force-webrtc-ip-handling-policy=disable_non_proxied_udp",
@@ -143,7 +145,7 @@ class ChromiumReader:
                         if skipped
                         else []
                     )
-                    return PageCapture(fetched, screenshot, viewport, notes)
+                    return PageCapture(replace(fetched, warnings=tuple(notes)), screenshot, viewport, notes)
                 finally:
                     await browser.close()
         except (PlaywrightError, TimeoutError) as exc:

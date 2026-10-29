@@ -1,0 +1,16 @@
+{
+  "checkedOn": "2026-10-29",
+  "baseCommit": "a4a921e",
+  "stageStatus": "started; native integration and model acceptance pending",
+  "python": { "version": "3.14.7", "baselinePassed": 39, "baselineSkipped": 2, "finalPassed": 58, "finalSkipped": 0, "ruff": "passed", "realLocalEdgeTests": 2, "realMcpStdioSyntheticTest": 1 },
+  "typescript": { "passed": 87, "webTests": 27, "files": 10, "typecheck": "passed", "build": "passed" },
+  "liveReadProbes": [
+    { "url": "https://example.org/", "httpStatus": 200, "status": "ok", "chars": 156, "chunks": 1 },
+    { "url": "https://httpbin.org/status/403", "httpStatus": 403, "status": "blocked", "chars": 0, "chunks": 0 }
+  ],
+  "independentReview": { "p2Fixed": 3, "minorRegradedAndFixed": 2, "deferredMinor": 0 },
+  "modelCalls": 0,
+  "installedPluginChanges": 0,
+  "mcpConfigChanges": 0,
+  "limitations": ["Native adapter not registered", "No controlled-output model acceptance", "No live in-chat source viewer", "Automatic vision fallback disabled", "Source cap is characters, not measured tokens", "Docker/Python3.12 suite not rerun", "Historical Stage00 and original web manifests retained unchanged"]
+}

@@ -144,3 +144,12 @@ it('firstInstallationCopyFailureCanBeRetried', async () => {
   expect((await readInstallState(target))?.activeVersion).toBeNull();
   await expect(installRelease(source, target)).resolves.toHaveProperty('activeVersion');
 });
+it('windowsUpdateRecoversDeadHostMetadataAndKeepsSettings', async () => {
+  if (process.platform !== 'win32') return;
+  const base = await root(); const source = await release(base, '0.1.0'); const target = join(base, 'app');
+  await installRelease(source, target); await mkdir(join(target, 'data/host'), { recursive: true });
+  await writeFile(join(target, 'data/host/settings.json'), 'personal fixture');
+  await writeFile(join(target, 'data/host/.host-lock'), '999999999');
+  await expect(installRelease(source, target)).resolves.toHaveProperty('activeVersion');
+  expect(await readFile(join(target, 'data/host/settings.json'), 'utf8')).toBe('personal fixture');
+});

@@ -1,0 +1,9 @@
+{
+  "postHookObserved": true,
+  "cancelled": true,
+  "nextRequestHttpStatus": 200,
+  "nextRequestElapsedSeconds": 0.768,
+  "scope": "Real VisionClient POST cancelled after request hook; follow-up same loaded model. Native process-tree Stop checked separately.",
+  "lmStudioVersion": "0.4.27.0",
+  "modelSelection": "explicit currently loaded 12B; no load/unload"
+}

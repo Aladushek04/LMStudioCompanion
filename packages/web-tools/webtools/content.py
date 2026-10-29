@@ -1,16 +1,19 @@
 """HTML extraction and bounded, expiring page storage."""
 
+import hashlib
 import re
 import time
 import uuid
 from collections import OrderedDict
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
+from datetime import UTC, datetime
 from urllib.parse import urljoin
 
 import lxml.html
 import trafilatura
 
 from .images import discover_images
+from .results import make_source_result
 
 
 @dataclass
@@ -22,6 +25,11 @@ class Page:
     rendered: bool = False
     warnings: list[str] = field(default_factory=list)
     images: list[dict] = field(default_factory=list)
+    requested_url: str | None = None
+    http_status: int = 200
+    retrieved_at: str = ""
+    content_hash: str | None = None
+    status: str = "ok"
 
 
 def extract_page(html: str, url: str) -> Page:
@@ -31,7 +39,7 @@ def extract_page(html: str, url: str) -> Page:
         return Page(url, "", html.strip())
     title = " ".join(tree.xpath("//title/text()")).strip()[:300]
     images = discover_images(tree, url)
-    for node in tree.xpath("//script|//style|//noscript|//nav|//footer|//header|//svg"):
+    for node in tree.xpath("//title|//script|//style|//noscript|//nav|//footer|//header|//svg"):
         node.drop_tree()
     links = []
     link_budget = 2500
@@ -78,14 +86,14 @@ class PageCache:
                 del self.pages[old_key]
         key = uuid.uuid4().hex[:12]
         source_chars = len(page.text)
-        stored = Page(
-            page.url,
-            page.title,
-            page.text[: self.max_chars],
-            page.links,
-            page.rendered,
-            list(page.warnings),
-            list(page.images),
+        stored = replace(
+            page,
+            text=page.text[: self.max_chars],
+            warnings=list(page.warnings),
+            images=list(page.images),
+            links=list(page.links),
+            retrieved_at=page.retrieved_at or datetime.now(UTC).isoformat(),
+            content_hash=page.content_hash or hashlib.sha256(page.text.encode()).hexdigest(),
         )
         self.pages[key] = (stored, self.clock(), source_chars)
         while len(self.pages) > self.max_pages:
@@ -109,12 +117,36 @@ class PageCache:
                 return key
         return None
 
-    def slice(self, key: str, start: int, max_chars: int):
+    def invalidate(self, url: str):
+        for key, (page, _, _) in list(self.pages.items()):
+            if url in {page.url, page.requested_url}:
+                del self.pages[key]
+
+    def slice(self, key: str, start: int, max_chars: int, requested_url=None):
         if start < 0 or not 1 <= max_chars <= 12_000:
             raise ValueError("start must be nonnegative; max_chars must be 1..12000.")
         page, _, original = self._get(key)
         end = min(start + max_chars, len(page.text))
         return {
+            **make_source_result(
+                requested_url=requested_url or page.requested_url or page.url,
+                final_url=page.url,
+                http_status=page.http_status,
+                text=page.text[start:end],
+                title=page.title,
+                page_id=key,
+                start=start,
+                content_hash=page.content_hash,
+                retrieved_at=page.retrieved_at,
+                status="partial"
+                if page.status == "partial"
+                or page.warnings
+                or original > len(page.text)
+                or start > 0
+                or end < len(page.text)
+                else "ok",
+                warnings=page.warnings,
+            ),
             "page_id": key,
             "url": page.url,
             "title": page.title,

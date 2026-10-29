@@ -5,6 +5,7 @@ import { resolve, join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { wrapper } from './launchers.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const run = promisify(execFile);
@@ -35,8 +36,7 @@ try {
   const guidePath = join(stage, 'docs/USER-GUIDE.md');
   const guide = await readFile(guidePath, 'utf8');
   await writeFile(guidePath, guide.replace(/\]\(((?:plans|research)\/[^)]+)\)/g, '](' + 'https://github.com/Aladushek04/LMStudioCompanion/blob/feat/foundation-panel/docs/$1)'));
-  const wrapper = flag => `@echo off\r\nchcp 65001 >nul\r\npowershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\\Start.ps1" -${flag}\r\nif errorlevel 1 pause\r\n`;
-  await writeFile(join(stage, 'Diagnose-Companion.cmd'), wrapper('Diagnose'));
+  await writeFile(join(stage, 'Diagnose-Companion.cmd'), wrapper('Diagnose', true));
   await writeFile(join(stage, 'Start-Advisor.cmd'), wrapper('Advisor'));
   const advisor = JSON.parse(await readFile(join(root, 'reference/advisor-manifest.json'), 'utf8'));
   for (const [name, digest] of Object.entries(advisor.files)) {

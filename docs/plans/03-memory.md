@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+Подэтапы C0–C5 и правило «один заход — один подэтап»: [порядок выполнения](03-memory-stages.md). C0 и C1 завершены; [результаты C1](../research/memory-c1-check.md). C2–C5 ещё не выполнены.
+
 **Goal:** Пользователь видит сохранённые факты и может надёжно управлять ими без знания memory-tools.
 
 **Architecture:** Совместимый адаптер/fork persistent-memory с одним владельцем хранения. Панель и LM Studio обращаются к нему через management API; живая база старого плагина не редактируется вторым процессом.
@@ -27,7 +29,7 @@
 
 **Files:** создать `packages/memory/src/store.ts`, `migration.ts`, `types.ts`, `tests/memory/store.test.ts`, `tests/fixtures/memory-v2.json`, `docs/research/memory-compatibility.md`.
 
-**Interfaces:** `MemoryRecord = {id: string; content: string; category: string; scope: 'global'|'project'|'session'; projectId: string|null; sessionId: string|null; source: string; createdAt: number; updatedAt: number}`; `listMemories(filter: {scope?: MemoryRecord['scope']; projectId?: string; sessionId?: string; query?: string}): Promise<MemoryRecord[]>`; `saveMemory(record: Omit<MemoryRecord,'id'|'createdAt'|'updatedAt'>): Promise<OperationResult<MemoryRecord>>`; `updateMemory(id: string, content: string): Promise<OperationResult<MemoryRecord>>`; `deleteMemory(id: string): Promise<OperationResult<void>>`; `importMemoryBackup(path: string): Promise<OperationResult<{imported: number; skipped: number}>>`. sessionId обязателен для session и null для постоянных записей; старые постоянные записи мигрируют с sessionId=null.
+**Interfaces — уточнение C1:** актуальная запись и методы владельца определены в [контракте C1](03-memory-c1.md) и `packages/memory/src/types.ts`: добавлены identityKey/revision/pinned/manualPriority/deletedAt и совместимые дополнительные поля. update/delete требуют expectedRevision; background использует одноразовый token и не записывает результат без подтверждения. Backup/restore C1 работает только с собственным snapshot; импорт прежней памяти перенесён в C5 и пока не реализован. Общий OperationResult сохранён.
 
 - [ ] Тесты `singleWriterEnforced`, `failedFlushIsNotSuccess`, `migrationPreservesFields`, `migrationIsIdempotent`: `expect(result.ok).toBe(false)` при отказе диска; повторный импорт не удваивает записи; копия исходной fixture не меняется. Дополнительные upstream-поля сохранить при миграции, даже если UI их пока не показывает.
 - [ ] Запустить `npm exec vitest -- run tests/memory/store.test.ts`; получить падение.

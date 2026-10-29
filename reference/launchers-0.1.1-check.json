@@ -1,0 +1,16 @@
+{
+  "checkedOn": "2026-10-29",
+  "version": "0.1.1",
+  "vitest": { "passed": 92, "failed": 0, "files": 11 },
+  "typecheck": "passed",
+  "cmdLaunchers": "passed: portable context; diagnostic exit0/exit7, output and pause",
+  "releaseLifecycle": "passed; crash metadata intentionally retained before update",
+  "independentReview": { "confirmedFindings": 0 },
+  "providedPortableCopy": { "path": "releases/LMStudioCompanion-0.1.0-win-x64", "payloadVersion": "0.1.1", "changedIncludingManifest": 10, "allPayloadHashesVerified": 33, "backupCreated": true, "actualLaunchesHttp200": 2, "diagnosticExitCode": 0, "diagnosticPausePresent": true, "dataUpdatedOrDeleted": false },
+  "archive": "releases/LMStudioCompanion-0.1.1-win-x64.zip",
+  "archiveSha256": "348b650b1876b31b5ef38c39ccb60ae6accb96812d3f0b311c9c06b4c99903dc",
+  "modelCalls": 0,
+  "thirdPartyPluginChanges": 0,
+  "mcpConfigChanges": 0,
+  "limitations": ["Automatic recovery is Windows-specific", "Corrupt metadata or possibly alive legacy PID remains conservative", "Portable folder has no installed-version rollback history", "Historical manifests retained unchanged"]
+}

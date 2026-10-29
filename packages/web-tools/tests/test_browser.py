@@ -6,7 +6,7 @@ from webtools.browser import ChromiumReader
 from webtools.network import Fetched
 
 
-@pytest.mark.skipif(not os.getenv("PLAYWRIGHT_BROWSERS_PATH"), reason="Run in Docker test image")
+@pytest.mark.skipif(not (os.getenv("PLAYWRIGHT_BROWSERS_PATH") or os.getenv("COMPANION_TEST_BROWSER")), reason="No test Chromium configured")
 async def test_javascript_generated_article_is_read_after_render():
     class FixtureFetcher:
         async def fetch(self, url, **kwargs):
@@ -15,12 +15,12 @@ async def test_javascript_generated_article_is_read_after_render():
             'This article was created by JavaScript and is readable now.';</script></body></html>"""
             return Fetched(url, 200, {"content-type": "text/html"}, html.encode())
 
-    result = await ChromiumReader(FixtureFetcher()).render("https://example.com/fixture")
+    result = await ChromiumReader(FixtureFetcher(), os.getenv("COMPANION_TEST_BROWSER")).render("https://example.com/fixture")
     assert result.status == 200
     assert "This article was created by JavaScript and is readable now." in result.text
 
 
-@pytest.mark.skipif(not os.getenv("PLAYWRIGHT_BROWSERS_PATH"), reason="Run in Docker test image")
+@pytest.mark.skipif(not (os.getenv("PLAYWRIGHT_BROWSERS_PATH") or os.getenv("COMPANION_TEST_BROWSER")), reason="No test Chromium configured")
 async def test_visual_capture_loads_actual_page_images_and_scrolls():
     import io
 
@@ -38,7 +38,7 @@ async def test_visual_capture_loads_actual_page_images_and_scrolls():
             <div style="position:absolute;top:1500px;background:orange;width:200px;height:200px">Bottom</div></body></html>"""
             return Fetched(url, 200, {"content-type": "text/html"}, html.encode())
 
-    reader = ChromiumReader(FixtureFetcher())
+    reader = ChromiumReader(FixtureFetcher(), os.getenv("COMPANION_TEST_BROWSER"))
     result = await reader.capture("https://example.com/visual")
     image = Image.open(io.BytesIO(result.screenshot)).convert("RGB")
     assert image.size == (1280, 900)

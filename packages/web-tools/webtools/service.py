@@ -1,9 +1,11 @@
 """Tool behavior independent of MCP transport."""
 
 import asyncio
+import hashlib
 
 from .content import Page, PageCache, extract_page
 from .network import FetchError
+from .results import classify_read, fetched_result
 
 
 class WebTools:
@@ -27,7 +29,7 @@ class WebTools:
             )
         key = self.cache.lookup(url)
         if key and (render != "always" or start > 0):
-            return self.cache.slice(key, start, max_chars)
+            return self.cache.slice(key, start, max_chars, requested_url=url)
         if start > 0:
             raise ValueError(
                 "Cached page missing or expired. Read the URL from start=0 before continuing."
@@ -39,7 +41,12 @@ class WebTools:
                 try:
                     fetched = await self.fetcher.fetch(url)
                     if fetched.status >= 400:
-                        raise FetchError(f"Page returned HTTP {fetched.status}.")
+                        return self._unavailable(
+                            url,
+                            fetched,
+                            Page(fetched.url, "", ""),
+                            classify_read(fetched.status, "", ""),
+                        )
                     content_type = fetched.headers.get("content-type", "").lower()
                     if content_type.startswith("text/plain"):
                         page = Page(fetched.url, "", fetched.text)
@@ -49,6 +56,10 @@ class WebTools:
                         raise FetchError(
                             "Only HTML and plain text pages are supported; PDFs and files are not read."
                         )
+                    status = classify_read(fetched.status, page.text, page.title)
+                    if status in {"blocked", "error"}:
+                        return self._unavailable(url, fetched, page, status)
+                    self._snapshot(page, url, fetched)
                 except FetchError as exc:
                     static_error = exc
             needs_browser = render == "always" or (
@@ -72,12 +83,14 @@ class WebTools:
                 else:
                     try:
                         fetched = await self.browser.render(url)
-                        if fetched.status >= 400:
-                            raise FetchError(f"Browser page returned HTTP {fetched.status}.")
                         rendered = extract_page(fetched.text, fetched.url)
+                        status = classify_read(fetched.status, rendered.text, rendered.title)
+                        if status in {"blocked", "error"}:
+                            return self._unavailable(url, fetched, rendered, status)
                         if not rendered.text.strip():
                             raise FetchError("Browser returned no readable text.")
                         rendered.rendered = True
+                        self._snapshot(rendered, url, fetched)
                         page = rendered
                     except FetchError as exc:
                         if render == "always" or page is None or not page.text.strip():
@@ -86,9 +99,25 @@ class WebTools:
             if page is None:
                 raise static_error or FetchError("No readable page content.")
             if not page.text.strip():
-                raise FetchError("No readable text. Try render='always' or another source.")
+                return self._unavailable(url, fetched, page, "empty")
             key = self.cache.put(page)
-            return self.cache.slice(key, start, max_chars)
+            return self.cache.slice(key, start, max_chars, requested_url=url)
+
+    @staticmethod
+    def _snapshot(page, requested_url, fetched):
+        page.requested_url = requested_url
+        page.http_status = fetched.status
+        page.content_hash = hashlib.sha256(fetched.body).hexdigest()
+        page.warnings.extend(fetched.warnings)
+        if fetched.status == 206:
+            page.warnings.append("Сервер вернул только часть содержимого (HTTP 206).")
+        if page.warnings:
+            page.status = "partial"
+
+    def _unavailable(self, url, fetched, page, status):
+        self.cache.invalidate(url)
+        self.cache.invalidate(fetched.url)
+        return fetched_result(url, fetched, page, status)
 
     def find(self, page_id, query):
         return self.cache.find(page_id, query)

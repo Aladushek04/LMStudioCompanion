@@ -11,5 +11,5 @@
     "types": ["node"],
     "jsx": "react-jsx"
   },
-  "include": ["packages/core/src/**/*.ts", "packages/host/src/**/*.ts", "packages/lmstudio-plugin/src/**/*.ts", "packages/control-panel/src/**/*.ts", "packages/control-panel/src/**/*.tsx", "tests/foundation/**/*.ts", "vitest.config.ts"]
+  "include": ["packages/core/src/**/*.ts", "packages/memory/src/**/*.ts", "packages/host/src/**/*.ts", "packages/lmstudio-plugin/src/**/*.ts", "packages/control-panel/src/**/*.ts", "packages/control-panel/src/**/*.tsx", "tests/foundation/**/*.ts", "tests/web/**/*.ts", "tests/memory/**/*.ts", "vitest.config.ts"]
 }
