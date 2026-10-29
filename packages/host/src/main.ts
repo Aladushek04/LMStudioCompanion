@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'node:url';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { startManagementServer } from './server.js';
@@ -7,7 +7,15 @@ import { startManagementServer } from './server.js';
 const controller = new AbortController(); const stop = () => controller.abort();
 for (const event of ['SIGINT', 'SIGTERM', 'SIGBREAK'] as const) process.once(event, stop);
 try {
-  const host = await startManagementServer(fileURLToPath(new URL('../../../data/host/', import.meta.url)), controller.signal, { port: 17837 });
+  let settingsDir = fileURLToPath(new URL('../../../data/host/', import.meta.url)); let port = 17837;
+  const args = process.argv.slice(2);
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--open') continue;
+    if (args[i] === '--data-dir' && args[i + 1]) { settingsDir = resolve(args[++i]!); continue; }
+    if (args[i] === '--port' && args[i + 1]) { port = Number(args[++i]); if (Number.isInteger(port) && port >= 0 && port <= 65535) continue; }
+    throw new Error('Некорректные параметры запуска панели.');
+  }
+  const host = await startManagementServer(settingsDir, controller.signal, { port });
   console.log(`Панель Companion: ${host.origin}\nОстановка — Ctrl+C. Настройки LM Studio не изменяются.`);
   if (process.argv.includes('--open')) {
     try {

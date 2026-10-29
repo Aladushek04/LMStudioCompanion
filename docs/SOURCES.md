@@ -26,6 +26,8 @@
 
 ## Входные требования
 
+Упаковка этапа 00: [Node 24.22.2 SHASUMS256.txt](https://nodejs.org/dist/v24.22.2/SHASUMS256.txt), архив `node-v24.22.2-win-x64.zip`; npm 12.2.1 — официальный registry.npmjs.org. URL и контрольные суммы закреплены в scripts/runtime-lock.json, лицензии включены в комплект. Локально дополнительно проверены `ToolCallContext`/`PromptPreprocessorController` SDK и `context-compressor/src/config.ts`; [выводы](research/chat-visualization.md).
+
 Дополнение 2026-10-29: пользователь показал индикаторы context-compressor прямо в чате и попросил аналогичную визуализацию с возможностью отключения, если она расходует контекст. В [ТЗ](requirements/chat-visualization.md) зафиксированы требования; исходный скриншот и текст показанной переписки в репозиторий не включены. В установленном src/handler.ts есть createStatus и createContentBlock с includeInContext: false; это кандидат для исследования, не подтверждение работы новой интеграции или её стоимости.
 
 В этом запросе пользователь выбрал планирование пунктов 1, 2, 3, 4, 6 при user-friendly результате, исключил голос и пункт 7. Для пункта 6 отдельно потребовал естественный выбор чтения без `read_page`; это включено в план 06.

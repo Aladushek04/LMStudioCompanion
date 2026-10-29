@@ -10,7 +10,9 @@
     "build": "node scripts/build.mjs",
     "diagnose": "node dist/host/src/diagnose.js",
     "start": "node dist/host/src/main.js",
-    "test:panel": "node scripts/check-panel.mjs"
+    "test:panel": "node scripts/check-panel.mjs",
+    "package": "node scripts/package.mjs",
+    "test:release": "node scripts/check-release.mjs"
   },
   "dependencies": { "zod": "3.25.76", "react": "19.3.1", "react-dom": "19.3.1" },
   "devDependencies": {
@@ -20,6 +22,7 @@
     "vite": "8.3.5",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
-    "playwright-core": "1.64.1"
+    "playwright-core": "1.64.1",
+    "esbuild": "0.28.2"
   }
 }

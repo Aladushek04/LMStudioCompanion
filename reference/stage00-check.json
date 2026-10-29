@@ -1,0 +1,18 @@
+{
+  "checkedOn": "2026-10-29",
+  "scope": "Stage 00: conservative tools-only, local panel and Windows x64 installer",
+  "vitest": { "passed": 60, "failed": 0, "files": 6 },
+  "typecheck": "passed",
+  "buildAndPackage": "passed",
+  "releaseSmoke": { "checks": 11, "passed": true, "profile": "synthetic only", "powershell": "5.1", "runtime": "24.22.2" },
+  "sourceBootstrap": "passed without LM Studio Node or Node/npm in PATH, including fresh-shell launch",
+  "panel": "connected, unavailable, cancellation, offline, 320px, 200% text, keyboard, no page errors",
+  "baselines": { "advisorUnchanged": 13, "webUnchanged": 30 },
+  "documents": { "utf8": "passed", "markdownFiles": 24, "localLinks": 72 },
+  "independentReview": { "importantFindings": 4, "fixed": 4, "deferredMinorFindings": 0 },
+  "generationCalls": 0,
+  "installedPluginChanges": 0,
+  "mcpConfigChanges": 0,
+  "chatVisualization": "local panel fallback; native chat feature unavailable; token cost unknown, not measured",
+  "limitations": ["No test of a new prediction owner", "No in-chat on/off token comparison", "No OS power-loss recovery test", "No integration or data migration of future web/memory/documents/profiles/Thinking modules", "ZIP is not digitally signed"]
+}
