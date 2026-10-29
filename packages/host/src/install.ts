@@ -3,6 +3,7 @@ import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import type { OperationResult } from '../../core/src/contracts.js';
+import { acquireSettingsOwnership } from './ownership.js';
 
 export const bootstrapFiles = ['Start-Companion.cmd', 'Diagnose-Companion.cmd', 'Start-Advisor.cmd', 'Rollback-Companion.cmd', 'Uninstall-Companion.cmd', 'scripts/Start.ps1', 'scripts/Rollback.ps1', 'scripts/Uninstall.ps1'] as const;
 const product = 'LMStudioCompanion';
@@ -53,9 +54,13 @@ async function mutationLock(root: string) {
   await plainPath(root); await mkdir(root, { recursive: true });
   const lockPath = join(root, '.install-lock');
   const handle = await open(lockPath, 'wx').catch(() => { throw new Error('Установка или удаление уже выполняется.'); });
-  try { if (await exists(join(root, 'data/host/.host-lock'))) throw new Error('Сначала остановите панель Companion.'); }
+  let releaseHost: (() => Promise<void>) | undefined;
+  try {
+    const settingsDir = join(root, 'data/host');
+    if (await exists(settingsDir)) { await plainPath(settingsDir); releaseHost = await acquireSettingsOwnership(settingsDir); }
+  }
   catch (error) { await handle.close(); await rm(lockPath, { force: true }); throw error; }
-  return async () => { await handle.close(); await rm(lockPath, { force: true }); };
+  return async () => { try { await handle.close(); await rm(lockPath, { force: true }); } finally { await releaseHost?.(); } };
 }
 async function checkBootstrap(root: string, previous: State | null) {
   const old = previous?.bootstrapVersion ? await manifest(join(root, 'versions', previous.bootstrapVersion), false) : null;

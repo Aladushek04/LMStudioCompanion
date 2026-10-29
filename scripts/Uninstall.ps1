@@ -2,6 +2,11 @@
 [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
 $OutputEncoding = [Console]::OutputEncoding
 $taskRoot = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
+if (-not (Test-Path -LiteralPath (Join-Path $taskRoot 'install-state.json'))) {
+    Write-Host 'Это распакованный переносной комплект. Установленной версии в этой папке нет; ничего не удалено.'
+    Write-Host 'Для удаления установленной версии откройте Uninstall-Companion.cmd в папке установки. При переносном использовании сохраните data перед удалением самой папки.'
+    exit 0
+}
 $taskState = Get-Content -LiteralPath (Join-Path $taskRoot 'install-state.json') -Raw -Encoding UTF8 | ConvertFrom-Json
 if ($taskState.product -ne 'LMStudioCompanion' -or $taskState.root -ne $taskRoot -or $taskState.bootstrapVersion -notmatch '^[a-f0-9-]{36}$') { throw 'Запись установки повреждена или приложение уже удалено.' }
 $taskBase = Join-Path $taskRoot ('versions\' + $taskState.bootstrapVersion)

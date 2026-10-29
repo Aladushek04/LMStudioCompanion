@@ -17,6 +17,12 @@ it('refusesStartDuringInstallation', async () => {
   await writeFile(join(root, '.install-lock'), 'fixture');
   await expect(startManagementServer(dir, new AbortController().signal, { assets: new Map() })).rejects.toThrow('установ');
 });
+it('recoversStaleWindowsLockWithoutUsingPidAsProof', async () => {
+  if (process.platform !== 'win32') return;
+  const dir = await directory(); await writeFile(join(dir, '.host-lock'), '999999999');
+  const server = await startManagementServer(dir, new AbortController().signal, { assets: new Map() }); servers.push(server);
+  expect((await fetch(server.origin + '/api/status')).status).toBe(403);
+});
 async function host(probe = async (_signal: AbortSignal) => report) {
   const dir = await directory();
   const server = await startManagementServer(dir, new AbortController().signal, { probe, assets: new Map([['/', { content: Buffer.from('<!doctype html><html lang="ru"><title>Панель</title></html>'), type: 'text/html; charset=utf-8' }]]) });

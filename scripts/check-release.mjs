@@ -6,6 +6,7 @@ import { spawn, execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { once } from 'node:events';
 const root = fileURLToPath(new URL('../', import.meta.url));
+const version = JSON.parse(await readFile(join(root, 'package.json'), 'utf8')).version;
 const work = await mkdtemp(join(root, '.tools', 'release-check-'));
 const source = join(work, 'дистрибутив с пробелами'); const target = join(work, 'тестовый профиль');
 const ps = join(process.env.SystemRoot ?? 'C:\\Windows', 'System32/WindowsPowerShell/v1.0/powershell.exe');
@@ -18,11 +19,14 @@ async function stop() {
   if (!child) return;
   const closed = once(child, 'close');
   await run('taskkill.exe', ['/PID', String(child.pid), '/T', '/F'], { windowsHide: true }); await closed; child = undefined;
-  // This process tree was force-stopped; recover only its synthetic settings lock.
-  await rm(join(target, 'data/host/.host-lock'), { force: true });
+  // Keep crash metadata: the application/installer must recover it safely.
 }
 try {
-  await run(ps, ['-NoProfile', '-NonInteractive', '-Command', 'Add-Type -AssemblyName System.IO.Compression.FileSystem; [IO.Compression.ZipFile]::ExtractToDirectory($env:COMPANION_ARCHIVE, $env:COMPANION_UNPACK)'], { env: { ...env, COMPANION_ARCHIVE: join(root, 'releases/LMStudioCompanion-0.1.0-win-x64.zip'), COMPANION_UNPACK: source }, windowsHide: true });
+  await run(ps, ['-NoProfile', '-NonInteractive', '-Command', 'Add-Type -AssemblyName System.IO.Compression.FileSystem; [IO.Compression.ZipFile]::ExtractToDirectory($env:COMPANION_ARCHIVE, $env:COMPANION_UNPACK)'], { env: { ...env, COMPANION_ARCHIVE: join(root, `releases/LMStudioCompanion-${version}-win-x64.zip`), COMPANION_UNPACK: source }, windowsHide: true });
+  for (const name of ['Rollback', 'Uninstall']) {
+    const explained = await script(join(source, `scripts/${name}.ps1`));
+    assert.match(explained.stdout, /переносно|распакован/i); assert.equal(explained.stderr, '');
+  }
   assert.equal((await run(join(source, 'runtime/node.exe'), ['--version'], { env })).stdout.trim(), 'v24.22.2');
   await script(join(source, 'scripts/Install.ps1'), ['-Preview', '-Target', target]);
   await assert.rejects(access(join(target, 'install-state.json')));
@@ -37,8 +41,12 @@ try {
   const asset = html.match(/src="([^"]+\.js)"/)[1]; assert.equal((await fetch(origin + asset)).status, 200);
   assert.equal((await fetch(origin + '/api/status')).status, 403);
   assert.doesNotMatch(output, /#token=|Bearer /);
+  const ownerBefore = await readFile(join(target, 'data/host/.host-lock'));
+  await assert.rejects(script(join(target, 'scripts/Start.ps1'), ['-NoOpen', '-Port', '0']));
+  assert.deepEqual(await readFile(join(target, 'data/host/.host-lock')), ownerBefore);
   await assert.rejects(script(join(source, 'scripts/Install.ps1'), ['-Apply', '-Target', target]));
   await stop();
+  await access(join(target, 'data/host/.host-lock'));
   await writeFile(join(target, 'data/host/personal-fixture.txt'), 'preserved');
   await script(join(source, 'scripts/Install.ps1'), ['-Apply', '-Target', target]); const second = await state(); assert.notEqual(first.activeVersion, second.activeVersion);
   await script(join(target, 'scripts/Rollback.ps1')); assert.equal((await state()).activeVersion, first.activeVersion);
