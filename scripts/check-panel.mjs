@@ -7,7 +7,7 @@ import { startManagementServer } from '../dist/host/src/server.js';
 
 const directory = await mkdtemp(join(tmpdir(), 'companion panel test '));
 const state = { connected: true, slow: false, aborted: false };
-const report = () => ({ lmStudioVersion: '0.4.26', checkedAt: new Date().toISOString(), features: { connection: { state: state.connected ? 'verified' : 'unknown', evidence: state.connected ? 'Локальный API отвечает.' : 'API недоступен.' }, thinking: { state: 'unknown', evidence: 'Механизм не проверен.' } } });
+const report = () => ({ lmStudioVersion: '0.4.26', checkedAt: new Date().toISOString(), features: { connection: { state: state.connected ? 'verified' : 'unknown', evidence: state.connected ? 'Локальный API отвечает.' : 'API недоступен.' }, thinking: { state: 'unsupported', evidence: 'В контрольном сценарии механизм недоступен.' } } });
 const host = await startManagementServer(directory, new AbortController().signal, { probe: async signal => {
   if (state.slow) { await new Promise(resolve => signal.addEventListener('abort', () => { state.aborted = true; resolve(); }, { once: true })); signal.throwIfAborted(); }
   return report();
@@ -21,6 +21,9 @@ try {
   await page.goto(host.origin);
   await page.getByRole('heading', { name: 'LM Studio подключена', exact: true }).waitFor();
   assert.equal(new URL(page.url()).hash, '');
+  await page.locator('summary').click();
+  assert.equal(await page.getByText('Не поддерживается', { exact: true }).count(), 1);
+  await page.locator('summary').click();
   const artifactDir = resolve('data/ui'); await mkdir(artifactDir, { recursive: true });
   await page.screenshot({ path: join(artifactDir, 'panel-desktop.png'), fullPage: true });
   await page.getByRole('button', { name: 'Память', exact: true }).click();

@@ -3,6 +3,8 @@ $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path -Parent $PSScriptRoot
 $taskNode = Join-Path $env:USERPROFILE '.lmstudio\.internal\utils\node.exe'
 if (-not (Test-Path -LiteralPath $taskNode)) { $taskNode = (Get-Command node.exe -ErrorAction Stop).Source }
+$taskVersion = (& $taskNode '--version').Trim().TrimStart('v')
+if ($LASTEXITCODE -ne 0 -or [version]$taskVersion -lt [version]'22.21.1') { throw 'Для панели нужен Node.js версии 22.21.1 или новее.' }
 $taskEntry = Join-Path $taskRoot 'dist\host\src\main.js'
 if (-not (Test-Path -LiteralPath $taskEntry)) { throw 'Панель ещё не собрана. Выполните npm ci --ignore-scripts и npm run build в папке проекта.' }
 if ($NoOpen) { & $taskNode $taskEntry } else { & $taskNode $taskEntry '--open' }

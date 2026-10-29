@@ -1,0 +1,26 @@
+{
+  "testsPassed": 46,
+  "typecheckPassed": true,
+  "buildPassed": true,
+  "browserScenarios": [
+    "connected",
+    "offline",
+    "unsupported",
+    "unavailable module",
+    "cancel",
+    "keyboard",
+    "320px",
+    "200% text"
+  ],
+  "realLocalApiReadOnlyCheckPassed": true,
+  "independentReviewPerformed": true,
+  "criticalOrImportantFindings": 0,
+  "documentsChecked": 25,
+  "brokenLocalLinks": [],
+  "advisorFilesUnchanged": 13,
+  "webFilesUnchanged": 30,
+  "sourceFilesInPanelManifest": 34,
+  "newPredictionOwnerRegistered": false,
+  "stage00Task3Complete": false,
+  "windowsPowerShellUnicodePathLaunchPassed": true
+}

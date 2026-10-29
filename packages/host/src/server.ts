@@ -45,7 +45,10 @@ function bodyJson(req: IncomingMessage, signal: AbortSignal): Promise<unknown> {
 export async function startManagementServer(settingsDir: string, signal: AbortSignal, options: ServerOptions = {}): Promise<ManagementServer> {
   signal.throwIfAborted(); await mkdir(settingsDir, { recursive: true });
   const lockPath = join(settingsDir, '.host-lock');
-  const lock = await open(lockPath, 'wx', 0o600).catch(() => { throw new Error('Панель уже запущена или остался файл блокировки. Закройте прежний процесс; инструкция восстановления — в USER-GUIDE.'); });
+  const lock = await open(lockPath, 'wx', 0o600).catch((error: NodeJS.ErrnoException) => {
+    if (error.code === 'EEXIST') throw new Error('Панель уже запущена или остался файл блокировки. Закройте прежний процесс; инструкция восстановления — в USER-GUIDE.');
+    throw new Error('Не удалось создать блокировку папки настроек. Проверьте права записи и свободное место на диске.');
+  });
   let released = false;
   const release = async () => { if (!released) { released = true; await lock.close(); await rm(lockPath, { force: true }); } };
   try {

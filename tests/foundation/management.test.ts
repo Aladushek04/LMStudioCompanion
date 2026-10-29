@@ -52,6 +52,17 @@ it('cancelledSettingsWriteKeepsPreviousState', async () => {
   await expect(store.writeSettings({ ...defaultSettings, mode: 'deep' }, controller.signal)).rejects.toThrow();
   expect(await store.readSettings()).toEqual(defaultSettings);
 });
+it('abortedHttpSettingsRequestDoesNotSavePartialBody', async () => {
+  const s = await host();
+  await new Promise<void>(resolve => {
+    const request = httpRequest(s.origin + '/api/settings', { method: 'PUT', headers: headers(s) });
+    request.on('error', () => undefined); request.once('close', () => resolve());
+    request.write('{"version":1,"mode":', () => request.destroy());
+  });
+  const response = await fetch(s.origin + '/api/settings', { headers: headers(s) });
+  expect(await response.json()).toMatchObject({ settings: defaultSettings });
+  await expect(readFile(join(s.dir, 'settings.json'), 'utf8')).rejects.toMatchObject({ code: 'ENOENT' });
+});
 it('changingDefaultDoesNotRebindChat', async () => {
   const scopes = new ChatScopeStore();
   const binding = scopes.bindChatScope('chat-1', 'project-a'); expect(binding.ok).toBe(true);

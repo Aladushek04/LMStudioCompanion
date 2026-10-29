@@ -10,7 +10,7 @@
 
 **Spec:** [DESIGN.md](../DESIGN.md).
 
-**Текущее выполнение:** первый read-only срез задачи 1 реализован; [отчёт](../research/capability-report.md), [журнал выполнения](../research/foundation-progress.md). Выбор tools-only не устанавливает новый обработчик. Реальная интеграция с генерацией остаётся unknown; задачи 2–3 ещё не исполнялись.
+**Текущее выполнение:** реализованы read-only срез задачи 1 и локальная панель задачи 2; [отчёт возможностей](../research/capability-report.md), [проверки панели](../research/panel-progress.md). Выбор tools-only не устанавливает новый обработчик. Реальная интеграция с генерацией остаётся unknown; комплект установки/отката задачи 3 ещё не реализован.
 
 ## Global Constraints
 
@@ -44,11 +44,11 @@
 
 **Interfaces:** `startManagementServer(settingsDir: string, signal: AbortSignal): Promise<{origin: string; token: string; close(): Promise<void>}>`; `readSettings(): Promise<Settings>` и `writeSettings(next: Settings): Promise<void>` из settings.ts. `Settings = {version: 1; defaultProjectId: string|null; mode: 'fast'|'auto'|'deep'; webMode: 'off'|'auto'|'research'; memoryMode: 'explicit'|'suggest'; activeProfileId: string|null}`. defaultProjectId действует только на новые чаты; текущая привязка хранится отдельно в `packages/host/src/chat-scopes.ts`. Контракт `bindChatScope(chatScopeId: string, projectId: string|null): OperationResult<{projectId: string|null; sessionId: string}>` запрещает сменить проект уже привязанного чата; sessionId живёт только до завершения host.
 
-- [ ] Тесты `rejectsUntrustedOrigin`, `requiresMutationToken`, `settingsSurviveRestart`, `changingDefaultDoesNotRebindChat`: `expect(status).toBe(403)` для чужого Origin или нетокенизированной записи; `expect(reloaded).toEqual(saved)` после успешной записи; повторный bind чата к другому проекту возвращает ошибку.
-- [ ] Запустить `npm exec vitest -- run tests/foundation/management.test.ts`; получить ожидаемое падение.
-- [ ] Реализовать только loopback binding, проверку Host/Origin, случайный токен запуска и атомарное сохранение настроек. Панель стартует по ярлыку; токен не писать в журналы. Разделы модели, ответов, памяти и документов имеют явное состояние доступности; отсутствующие функции не изображаются работающими.
-- [ ] Повторить тесты; вручную проверить состояния «LM Studio не запущена», «Подключено», «Функция пока не поддерживается» и работу клавиатурой. Отмена HTTP-запроса не должна менять settings после aborted.
-- [ ] Проверить diff и сохранить commit.
+- [x] Добавлены проверки чужого Origin/Host, токена, settings restart, отмены, размера/формата запроса и запрета перепривязки RAM-области чата. Привязка к настоящим чатам отключена до verified стабильного ID; постоянная привязка проектов остаётся условием перед включением проектной памяти.
+- [x] До реализации management.test.ts упал из-за отсутствия server.ts.
+- [x] Реализованы loopback binding, Host/Origin/token, единственный владелец settings-dir и атомарное сохранение собственных предпочтений. Панель запускается через Start-Companion.cmd; неподдержанные модули недоступны с объяснением. Предпочтения не применяются к LM Studio.
+- [x] Проверены подключение/отсутствие подключения, отмена, недоступные разделы, клавиатура, 320 px и 200% текста в отдельном браузере. Выполнен read-only прогон панели с настоящим API. Отмена записи сохраняет прежние настройки до начала атомарного rename; начатая фиксация завершается.
+- [x] Проверенные срезы сохранены отдельными коммитами; выполнено независимое ревью и исправления замечаний.
 
 ## Task 3: Комплект запуска, диагностика и откат
 
