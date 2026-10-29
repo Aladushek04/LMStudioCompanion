@@ -65,7 +65,7 @@ export async function probeCapabilities(signal: AbortSignal, options: ProbeOptio
     ? 'В декларациях найден startToolUseSession. В исследованном SDK 1.5.0 он deprecated/WIP; реальный сеанс инструментов не создавался.'
     : 'startToolUseSession не обнаружен в прочитанных декларациях. Реальный сеанс инструментов не создавался.');
   record('cancellation', 'unknown', 'Отмена собственной диагностики проверяется тестами. Отмена генерации и вложенных инструментов в новом адаптере не проверена.');
-  record('customUi', 'unknown', 'Поддержанный интерфейс полноценной встроенной панели не подтверждён; локальная панель относится к задаче 2.');
+  record('customUi', 'unknown', 'Поддержанный интерфейс полноценной встроенной панели не подтверждён. Отдельная локальная панель Companion доступна через Start-Companion.cmd.');
   record('stableChatScopeId', 'unknown', 'Стабильный публичный ID чата не доказан. Проектная и временная автоподстановка недоступны.');
   record('persistentFileHandle', 'unknown', 'Обнаруженные файловые методы: ' + (installation.sdkMethods.filter(name => ['prepareFile', 'prepareFileBase64', 'parseDocument', 'retrieve'].includes(name)).join(', ') || 'не подтверждены') + '. Сохранение handles, перезапуск и удаление библиотеки не проверялись.');
   record('thinking', 'unknown', 'Отдельная проверка на конкретной модели не выполнялась. Выбор режима интеграции не подтверждает Thinking.');

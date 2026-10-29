@@ -1,6 +1,6 @@
 # Проектное решение
 
-Дата: 2026-10-29. Основная архитектура остаётся предложением. Реализован автономный read-only советник 0.1.0 на Windows Forms/PowerShell; срез и его отличия от общей архитектуры описаны в docs/plans/01a-advisor-mvp.md. Начат этап 00: созданы общие контракты со схемами, read-only диагностика и чистая функция выбора интеграции. [Отчёт](research/capability-report.md) выбирает tools-only; адаптер генерации и общая панель ещё не реализованы.
+Дата: 2026-10-29. Основная архитектура остаётся предложением. Реализован автономный read-only советник 0.1.0 на Windows Forms/PowerShell; срез и его отличия от общей архитектуры описаны в docs/plans/01a-advisor-mvp.md. В этапе 00 готовы контракты, диагностика и локальная панель состояния с loopback management API. [Отчёт](research/capability-report.md) выбирает tools-only; собственного адаптера генерации нет. [Инструкция панели](USER-GUIDE.md), [проверки](research/panel-progress.md).
 
 ## Задача
 
@@ -52,7 +52,7 @@ flowchart TD
   POLICY --> MODEL[Загруженная Gemma]
 ```
 
-Созданы `packages/core` (контракты и схемы), `packages/host` (консольная диагностика, пока без management-сервера) и `packages/lmstudio-plugin` (только выбор режима по отчёту, без регистрации hooks). Также существуют `packages/web-tools`, копия прежнего инструмента, и `packages/advisor`, автономный советник 0.1.0. Будущие директории: `packages/control-panel` — интерфейс; `packages/memory` — совместимый fork/адаптер памяти; `packages/documents` — адаптер RAG.
+Созданы `packages/core` (контракты и схемы), `packages/host` (диагностика, loopback management API и собственные настройки), `packages/control-panel` (React-панель состояния) и `packages/lmstudio-plugin` (только выбор режима по отчёту, без регистрации hooks). Также существуют `packages/web-tools`, копия прежнего инструмента, и `packages/advisor`, автономный советник 0.1.0. Будущие директории: `packages/memory` — совместимый fork/адаптер памяти; `packages/documents` — адаптер RAG.
 
 Технологический выбор автора: TypeScript для SDK/сервиса и браузерной панели, React + Vite для будущей панели, Vitest для TS; Python 3.12+, pytest и существующий Docker для веба. Не устанавливать Electron/Tauri и отдельную LLM для классификации в первом выпуске. Для первого среза 00 закреплены TypeScript 5.9.3, Vitest 3.2.7 и Zod 3.25.76 в package.json/package-lock.json; SDK пока исследуется из установленной версии 1.5.0 и не импортируется продуктовой диагностикой. Зависимости следующих модулей закреплять по мере проверки.
 
