@@ -1,0 +1,7 @@
+{
+  "type": "plugin",
+  "runner": "node",
+  "owner": "aladushek04",
+  "name": "companion-web",
+  "revision": 1
+}

@@ -3,6 +3,7 @@ import { turnBudgetSchema, turnContextSchema, type CapabilityReport, type Operat
 import { SourceRegistry } from '../../../core/src/sources/registry.js';
 import { normalizeWebUrl, type WebPlan } from '../../../core/src/web/intent.js';
 import { TurnRepair } from '../tools/repair.js';
+import { WebTransportError } from './python-transport.js';
 
 export interface WebAdapter {
   report: CapabilityReport;
@@ -33,7 +34,7 @@ export class WebTurn {
   }
   async run(plan: WebPlan): Promise<OperationResult<SourceRecord[]>> {
     if (plan.kind === 'none') return { ok: true, value: [], warnings: [] };
-    if (!this.adapter || this.adapter.report.features.toolsSession?.state !== 'verified') return failure('UNSUPPORTED', 'Подключение автоматического веб-чтения к текущему чату ещё не подтверждено.');
+    if (!this.adapter || (this.adapter.report.features.toolsSession?.state !== 'verified' && this.adapter.report.features.webTransport?.state !== 'verified')) return failure('UNSUPPORTED', 'Подключение автоматического веб-чтения к текущему чату ещё не подтверждено.');
     const controller = new AbortController(); const timeout = setTimeout(() => controller.abort(), Math.max(0, this.expiresAt - Date.now()));
     const signal = AbortSignal.any([this.ctx.signal, controller.signal]); const warnings: string[] = []; const collected: SourceRecord[] = [];
     const invoke = async (name: Parameters<WebAdapter['call']>[0], args: Record<string, unknown>) => {
@@ -63,6 +64,7 @@ export class WebTurn {
         try { payload = await invoke(visual ? 'inspect_image' : 'read_page', visual ? { url, question: plan.query ?? 'Что изображено?' } : { url, max_chars: 6000 }); }
         catch (error) {
           if (signal.aborted) throw error;
+          if (error instanceof WebTransportError) return failure('BACKEND_UNAVAILABLE', error.message);
           collected.push(this.registry.registerSource(this.ctx.turnId, { uri: url, title: '', kind: visual ? 'web_visual' : 'web_text', status: 'error', retrievedAt: new Date().toISOString(), contentHash: null, chunks: [] }, url)); warnings.push('Один из источников получить не удалось.'); continue;
         }
         const decoded = resultSchema.safeParse(payload);

@@ -1,0 +1,15 @@
+import {build} from 'esbuild';
+import {mkdir,copyFile,writeFile,access} from 'node:fs/promises';
+import {resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
+const root=fileURLToPath(new URL('../',import.meta.url));
+const target=resolve(root,'.tools/native-plugin');
+const python=resolve(root,'.tools/web-venv/Scripts/python.exe');
+await access(python);
+const browser='C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
+await mkdir(resolve(target,'src'),{recursive:true});
+await build({entryPoints:[resolve(root,'packages/lmstudio-plugin/src/index.ts')],outfile:resolve(target,'src/index.ts'),bundle:true,platform:'node',format:'cjs',target:'node22',external:['@lmstudio/sdk'],define:{COMPANION_LOCAL_DEFAULTS:JSON.stringify({python,root:resolve(root,'packages/web-tools'),browser})}});
+await copyFile(resolve(root,'packages/lmstudio-plugin/manifest.json'),resolve(target,'manifest.json'));
+await copyFile(resolve(root,'packages/lmstudio-plugin/package-lock.json'),resolve(target,'package-lock.json'));
+await writeFile(resolve(target,'package.json'),JSON.stringify({name:'lmstudio-companion-web',version:'0.1.0',private:true,main:'index.js',dependencies:{'@lmstudio/sdk':'1.5.0'}}));
+console.log('Подготовлен самостоятельный плагин: '+target);

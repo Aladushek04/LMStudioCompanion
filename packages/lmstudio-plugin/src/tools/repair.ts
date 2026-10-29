@@ -26,7 +26,8 @@ function hasDuplicateKeys(raw: string) {
   return false;
 }
 export function repairToolArguments(raw: string, schema: unknown): OperationResult<{ args: unknown; changed: boolean }> {
-  if (raw.length > 65536 || !(schema instanceof z.ZodType)) return failure();
+  // The native plugin and host can have separate installed copies of Zod.
+  if (raw.length > 65536 || !schema || typeof schema !== 'object' || !('safeParse' in schema) || typeof schema.safeParse !== 'function') return failure();
   let candidate = raw; let changed = false; let args: unknown;
   try { args = JSON.parse(candidate); }
   catch { candidate = removeTrailingCommas(raw); changed = candidate !== raw; try { args = JSON.parse(candidate); } catch { return failure(); } }
