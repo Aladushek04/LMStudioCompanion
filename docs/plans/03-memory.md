@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+Подэтапы C0–C5 и правило «один заход — один подэтап»: [порядок выполнения](03-memory-stages.md). C0 завершён как исследование; C1 ещё не начат.
+
 **Goal:** Пользователь видит сохранённые факты и может надёжно управлять ими без знания memory-tools.
 
 **Architecture:** Совместимый адаптер/fork persistent-memory с одним владельцем хранения. Панель и LM Studio обращаются к нему через management API; живая база старого плагина не редактируется вторым процессом.
