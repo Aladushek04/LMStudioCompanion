@@ -29,7 +29,7 @@ class WebTools:
             )
         key = self.cache.lookup(url)
         if key and (render != "always" or start > 0):
-            return self.cache.slice(key, start, max_chars)
+            return self.cache.slice(key, start, max_chars, requested_url=url)
         if start > 0:
             raise ValueError(
                 "Cached page missing or expired. Read the URL from start=0 before continuing."
@@ -101,7 +101,7 @@ class WebTools:
             if not page.text.strip():
                 return self._unavailable(url, fetched, page, "empty")
             key = self.cache.put(page)
-            return self.cache.slice(key, start, max_chars)
+            return self.cache.slice(key, start, max_chars, requested_url=url)
 
     @staticmethod
     def _snapshot(page, requested_url, fetched):

@@ -226,7 +226,7 @@ class VisualTools:
             ),
             "kind": "page_screenshot",
             "source_kind": "web_visual",
-            "status": "partial" if capture.warnings else "ok",
+            "status": "partial",
             "interpretation": result["analysis"],
             "source_url": page.url,
             "title": page.title,
@@ -235,5 +235,10 @@ class VisualTools:
             "text_excerpt": page.text[:1500],
             **result,
             "capture_warnings": capture.warnings,
+            "warnings": [
+                *result.get("warnings", []),
+                *capture.warnings,
+                "Просмотрен один видимый участок страницы; полный охват не подтверждён.",
+            ],
             "display_hint": "This is one viewport, not the entire page. Use inspect_image for selected photos at higher detail. To show the screenshot, use LM Studio's supplied Markdown reference.",
         }, image

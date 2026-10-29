@@ -122,14 +122,14 @@ class PageCache:
             if url in {page.url, page.requested_url}:
                 del self.pages[key]
 
-    def slice(self, key: str, start: int, max_chars: int):
+    def slice(self, key: str, start: int, max_chars: int, requested_url=None):
         if start < 0 or not 1 <= max_chars <= 12_000:
             raise ValueError("start must be nonnegative; max_chars must be 1..12000.")
         page, _, original = self._get(key)
         end = min(start + max_chars, len(page.text))
         return {
             **make_source_result(
-                requested_url=page.requested_url or page.url,
+                requested_url=requested_url or page.requested_url or page.url,
                 final_url=page.url,
                 http_status=page.http_status,
                 text=page.text[start:end],

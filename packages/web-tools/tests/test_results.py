@@ -161,3 +161,60 @@ async def test_mcp_network_failure_returns_structured_error():
     result = await read_page("https://example.org/a", ctx)
     assert result["status"] == "error" and result["error"]
     assert result["chunks"] == []
+
+
+async def test_redirect_cache_reports_current_requested_url_and_keeps_snapshot():
+    final = "https://example.org/final"
+    tools = WebTools(
+        None, Fetcher("<article>" + "Useful content " * 50 + "</article>", final_url=final)
+    )
+    first = await tools.read("https://example.org/start", max_chars=20, render="never")
+    second = await tools.read(final, start=first["next_start"], max_chars=20)
+    assert second["requested_url"] == final
+    assert second["content_hash"] == first["content_hash"]
+    assert second["page_id"] == first["page_id"]
+
+
+async def test_captcha_body_without_special_title_is_blocked_without_fallback():
+    browser = Browser()
+    tools = WebTools(
+        None,
+        Fetcher(
+            "<title>Example site</title><p>Verify you are human. Complete the CAPTCHA to continue.</p>"
+        ),
+        browser,
+    )
+    result = await tools.read("https://example.org/article")
+    assert result["status"] == "blocked"
+    assert browser.calls == 0
+
+
+async def test_reading_beyond_snapshot_end_is_empty_not_partial_success():
+    tools = WebTools(None, Fetcher("<p>Actual short source</p>"))
+    await tools.read("https://example.org/article", render="never")
+    result = await tools.read("https://example.org/article", start=1000)
+    assert result["status"] == "empty" and result["chunks"] == []
+
+
+async def test_visual_capture_warnings_are_preserved_in_canonical_warnings(monkeypatch):
+    from webtools import visual
+
+    class Capture:
+        async def capture(self, url, scroll_y):
+            return PageCapture(
+                Fetched(url, 200, {}, b"<p>Public article</p>"),
+                b"fixture",
+                {},
+                ["Fixture image resource unavailable"],
+            )
+
+    class Vision:
+        async def analyze(self, image, question):
+            return {"analysis": "Fixture interpretation", "pixels_sent": True, "warnings": []}
+
+    monkeypatch.setattr(visual, "prepare_image", lambda _: visual.PreparedImage(b"fixture", 1, 1))
+    result, _ = await VisualTools(None, Capture(), Vision()).inspect_page(
+        "https://example.org/a", "Что видно?"
+    )
+    assert result["status"] == "partial"
+    assert "Fixture image resource unavailable" in result["warnings"]

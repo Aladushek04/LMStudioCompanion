@@ -11,10 +11,21 @@ CHALLENGE_TITLE = re.compile(
     r"доступ запрещ[её]н|проверка безопасности|подтвердите,? что вы (?:не робот|человек))$",
     re.IGNORECASE,
 )
+CHALLENGE_BODY = re.compile(
+    r"^(?:verify (?:that )?you are (?:a )?human|checking (?:your )?browser|"
+    r"(?:please )?complete (?:the )?(?:captcha|security check)|"
+    r"подтвердите,? что вы (?:не робот|человек)|пройдите проверку безопасности)",
+    re.IGNORECASE,
+)
 
 
 def classify_read(status: int, text: str, title: str) -> str:
-    if status in BLOCKED_HTTP or CHALLENGE_TITLE.fullmatch(title.strip()):
+    body = " ".join(text.split())
+    if (
+        status in BLOCKED_HTTP
+        or CHALLENGE_TITLE.fullmatch(title.strip())
+        or (len(body) <= 2000 and CHALLENGE_BODY.match(body))
+    ):
         return "blocked"
     if status >= 400:
         return "error"
@@ -40,7 +51,7 @@ def make_source_result(
     kind="web_text",
 ):
     usable = status in {"ok", "partial"} and bool(text.strip())
-    if status == "ok" and not usable:
+    if status in {"ok", "partial"} and not usable:
         status = "empty"
     return {
         "schema_version": 2,
