@@ -31,6 +31,8 @@ def classify_read(status: int, text: str, title: str) -> str:
         return "error"
     if not text.strip():
         return "empty"
+    if status == 206:
+        return "partial"
     return "ok"
 
 

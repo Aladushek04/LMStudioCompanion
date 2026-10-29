@@ -109,6 +109,8 @@ class WebTools:
         page.http_status = fetched.status
         page.content_hash = hashlib.sha256(fetched.body).hexdigest()
         page.warnings.extend(fetched.warnings)
+        if fetched.status == 206:
+            page.warnings.append("Сервер вернул только часть содержимого (HTTP 206).")
         if page.warnings:
             page.status = "partial"
 

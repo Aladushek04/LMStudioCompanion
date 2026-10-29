@@ -218,3 +218,9 @@ async def test_visual_capture_warnings_are_preserved_in_canonical_warnings(monke
     )
     assert result["status"] == "partial"
     assert "Fixture image resource unavailable" in result["warnings"]
+
+
+async def test_http_partial_content_remains_partial():
+    tools = WebTools(None, Fetcher("<article>Available range of source</article>", status=206))
+    result = await tools.read("https://example.org/article", render="never")
+    assert result["status"] == "partial" and result["text"]
