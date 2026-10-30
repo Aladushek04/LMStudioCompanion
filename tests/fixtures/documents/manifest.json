@@ -1,0 +1,35 @@
+{
+  "synthetic": true,
+  "files": [
+    {
+      "name": "harbor.txt",
+      "bytes": 233,
+      "sha256": "45b68bb876c9d32860d1d6f5e3031fd0f5983abe840cbfab49b3331eb34d423d"
+    },
+    {
+      "name": "text.pdf",
+      "bytes": 2133,
+      "sha256": "00368e95b917b7e2ef4db7f98234dfaec99df35e90690dbf19806615ae949116"
+    },
+    {
+      "name": "scan.pdf",
+      "bytes": 15734,
+      "sha256": "9a3aaa5c01d4d53cc30be349f65283434f394064bcf7b885f0474042d69582e3"
+    },
+    {
+      "name": "broken.pdf",
+      "bytes": 35,
+      "sha256": "9068a3727b283cb55c068a0926f8bac1d34b78d18708b6def52b7ba098334c33"
+    }
+  ],
+  "independentPdfCheck": {
+    "textPages": 2,
+    "textMarkers": [
+      "MINT-482",
+      "ORBIT-936"
+    ],
+    "scanPages": 1,
+    "scanTextChars": 0,
+    "scanImages": 1
+  }
+}
