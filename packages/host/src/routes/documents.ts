@@ -1,6 +1,7 @@
 import type {IncomingMessage} from 'node:http';
 import {z} from 'zod';
 import {createDocumentWorkspaces,DocumentHttpError,type DocumentsOptions} from '../document-workspaces.js';
+import {createDocumentsSearch} from '../documents-search.js';
 const empty=z.object({}).strict(),revision=z.object({revision:z.number().int().positive()}).strict();
 const selection=revision.extend({selected:z.boolean()}).strict();
 const uuid='[a-f0-9-]{36}';
@@ -17,13 +18,18 @@ async function readBytes(req:IncomingMessage,signal:AbortSignal,maximum:number){
   if(signal.aborted)abort();
  });
 }
-async function json(req:IncomingMessage,signal:AbortSignal){if(req.headers['content-type']?.split(';')[0]?.trim()!=='application/json')throw new DocumentHttpError(415,'Ожидается JSON.');try{return JSON.parse((await readBytes(req,signal,1024)).toString('utf8')) as unknown;}catch(error){if(error instanceof DocumentHttpError)throw error;throw new DocumentHttpError(400,'Некорректный JSON.');}}
+async function json(req:IncomingMessage,signal:AbortSignal,maximum=1024){if(req.headers['content-type']?.split(';')[0]?.trim()!=='application/json')throw new DocumentHttpError(415,'Ожидается JSON.');try{return JSON.parse((await readBytes(req,signal,maximum)).toString('utf8')) as unknown;}catch(error){if(error instanceof DocumentHttpError)throw error;throw new DocumentHttpError(400,'Некорректный JSON.');}}
 export function createDocumentsRoutes(options:DocumentsOptions={}){
  const owner=createDocumentWorkspaces(options);
- return {close:()=>owner.close(),async handle(req:IncomingMessage,path:string,signal:AbortSignal){
+ const search=createDocumentsSearch(owner,options);
+ return {close:async()=>{search.close();await owner.close();},async handle(req:IncomingMessage,path:string,signal:AbortSignal){
   try{
    const method=req.method;
    if(path==='/api/documents'&&method==='POST'){if(!empty.safeParse(await json(req,signal)).success)throw new DocumentHttpError(400,'Ожидается пустой объект.');return {status:201,body:owner.create()};}
+   const query=new RegExp(`^/api/documents/(${uuid})/search$`).exec(path);
+   if(query&&method==='POST')return await search.search(query[1]!,await json(req,signal,65536),signal);
+   const citation=new RegExp(`^/api/documents/(${uuid})/searches/(${uuid})/sources/(source-${uuid})/chunks/(chunk-[a-f0-9]{64})$`).exec(path);
+   if(citation&&method==='GET')return {status:200,body:owner.citation(citation[1]!,citation[2]!,citation[3]!,citation[4]!)};
    const match=new RegExp(`^/api/documents/(${uuid})(?:/(files|items/(${uuid})(?:/(text|select|cancel|retry))?))?$`).exec(path);
    if(!match)throw new DocumentHttpError(404,'Операция недоступна.');
    const id=match[1]!,part=match[2],itemId=match[3],action=match[4];
