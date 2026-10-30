@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-Подэтапы C0–C5 и правило «один заход — один подэтап»: [порядок выполнения](03-memory-stages.md). C0 и C1 завершены; [результаты C1](../research/memory-c1-check.md). C2–C5 ещё не выполнены.
+Подэтапы C0–C5 и правило «один заход — один подэтап»: [порядок выполнения](03-memory-stages.md). C0 и C1 завершены; [результаты C1](../research/memory-c1-check.md). C2 выполнен: [экран памяти и проверки](../research/memory-c2-check.md). C3 выполнен для общей памяти: [результаты](../research/memory-c3-check.md). C4–C5 ещё не выполнены.
 
 **Goal:** Пользователь видит сохранённые факты и может надёжно управлять ими без знания memory-tools.
 

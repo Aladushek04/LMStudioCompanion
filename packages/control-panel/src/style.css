@@ -1,4 +1,28 @@
 @charset "UTF-8";
+/* Memory uses the existing panel palette and native form/dialog semantics. */
+.memory { min-width:0; }
+.memory-actions { display:flex; flex-wrap:wrap; gap:.65rem; margin-block:1rem; }
+.memory button { min-height:3rem; }
+.memory-filters { display:grid; grid-template-columns:2fr 1fr 1fr; gap:1rem; margin-block:1.5rem; }
+.memory label { display:block; font-weight:600; }
+.memory input:not([type=radio]):not([type=checkbox]),.memory select,.memory textarea { display:block; width:100%; min-width:0; max-width:100%; padding:.7rem; border:1px solid #87968b; border-radius:.45rem; background:#fff; color:inherit; font:inherit; font-size:1rem; margin-block:.4rem 1rem; }
+.memory textarea { resize:vertical; }
+.memory fieldset { min-width:0; padding:0; border:0; margin:0; }
+.memory .memory-scopes { border-block:1px solid #d7dfd3; padding-block:1rem; margin-block:1rem; }
+.memory-scopes legend { font-weight:600; }
+.memory .memory-scopes label,.memory-check { padding-block:.5rem; min-height:3rem; }
+.memory input[type=radio],.memory input[type=checkbox] { accent-color:#365d45; margin-inline-end:.65rem; }
+.memory-editor,.memory-record { background:#fff; border:1px solid #d7dfd3; border-radius:.7rem; padding:1.25rem; margin-block:1rem; }
+.memory-editor { border-inline-start:4px solid #365d45; }
+.memory-record-meta { display:flex; flex-wrap:wrap; gap:.5rem 1rem; color:#58665c; font-size:.875rem; }
+.memory-text { white-space:pre-wrap; color:#28352e; margin-block:1rem; }
+.memory-hint { font-size:.9rem; }
+.memory-status { min-height:1.5em; }
+.memory dialog { width:min(34rem,calc(100% - 2rem)); max-height:calc(100% - 2rem); overflow:auto; border:1px solid #87968b; border-radius:.75rem; padding:1.5rem; color:#28352e; }
+.memory dialog:modal { overscroll-behavior:contain; }
+.memory dialog::backdrop { background:#14251c88; overflow:hidden; overscroll-behavior:contain; }
+.memory .danger { background:#943c2f; color:white; border:1px solid #943c2f; border-radius:.4rem; padding:.65rem 1rem; }
+@media (max-width:700px) { .memory-filters { grid-template-columns:1fr; } .memory-actions>* { max-width:100%; } .memory-editor,.memory-record { padding:1rem; } }
 :root {
   font-family:Segoe UI,system-ui,sans-serif;
   color:#28352e;

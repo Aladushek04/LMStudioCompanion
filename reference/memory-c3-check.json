@@ -1,0 +1,12 @@
+{
+  "checkedAt": "2026-10-30",
+  "stage": "C3",
+  "version": "0.1.3",
+  "tests": {"passed": 138, "files": 23, "typecheck": true, "build": true, "releaseScenarios": 12, "browserMemory": true, "browserOverview": true},
+  "retrieval": {"method": "lexical TF-IDF", "russianLabelledPairs": 10, "top5Hits": 10, "requiredHits": 8, "extraGeneration": false},
+  "limits": {"records": 5, "memoryTokens": 1024, "transportCandidateBytes": 256000, "nativeScopes": ["global"], "platform": "win32"},
+  "nativeAcceptance": {"lmStudio": "0.4.27", "model": "google/gemma-4-12b-qat", "contextCompressorEnabled": true, "recall": true, "manualEditNextTurn": true, "deletedIdAbsentNextInjection": true, "webReadAfterDelete": true, "testLinkClearedAfterwards": true, "heavyCompressionRepeated": false, "model26BTested": false},
+  "review": {"importantFound": 1, "importantFixed": 1, "regression": "oversized Cyrillic recall response RED to GREEN; full suite passed", "deferredMinor": []},
+  "delivery": {"archive": "LMStudioCompanion-0.1.3-win-x64.zip", "sha256": "07e64cf8d5ca19046d424c3f1fa62c9d507f694bd822bd7085252ad037f4c22c", "payloadHashesVerified": 33, "runtime": "24.22.2", "ownPluginRevision": 2},
+  "nextStage": "C4 not started"
+}

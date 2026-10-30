@@ -6,11 +6,12 @@ export function getSessionToken(): string | null {
   if (token) { sessionStorage.setItem('companion-token', token); history.replaceState(null, '', location.pathname); }
   return sessionStorage.getItem('companion-token');
 }
-export async function request<T>(token: string, path: string, method = 'GET', signal?: AbortSignal): Promise<T> {
-  const response = await fetch(path, { method, headers: { Authorization: 'Bearer ' + token }, ...(signal ? { signal } : {}) });
+export class ApiError extends Error {constructor(message:string,readonly status:number){super(message);}}
+export async function request<T>(token: string, path: string, method = 'GET', signal?: AbortSignal, body?:unknown): Promise<T> {
+  const response = await fetch(path, { method, headers: { Authorization: 'Bearer ' + token,...(body===undefined?{}:{'Content-Type':'application/json'}) }, ...(signal ? { signal } : {}),...(body===undefined?{}:{body:JSON.stringify(body)}) });
   if (!response.ok) {
     const body = await response.json().catch(() => null) as { message?: string } | null;
-    throw new Error(body?.message ?? 'Панель потеряла связь с локальным сервисом.');
+    throw new ApiError(body?.message ?? 'Панель потеряла связь с локальным сервисом.',response.status);
   }
   return await response.json() as T;
 }

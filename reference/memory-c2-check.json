@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-30",
+  "scope": "C2 only; no chat injection or legacy migration",
+  "runtime": {
+    "testNode": "24.22.1",
+    "bundledNode": "24.22.2"
+  },
+  "checks": {
+    "vitest": 128,
+    "files": 19,
+    "newApiTests": 6,
+    "typecheck": "passed",
+    "build": "passed",
+    "browserMemory": "passed",
+    "browserOverview": "passed",
+    "conflictResolution": "explicit fresh-version confirmation; repeated concurrent edit re-conflicts",
+    "staleDelete": "refresh and reconfirm; record preserved",
+    "networkError": "Russian explanation; confirmed data preserved",
+    "xss": "rendered as plain text",
+    "viewports": [
+      "1440x1000",
+      "320x900",
+      "200% text"
+    ],
+    "releaseChecks": 12,
+    "payloadHashes": 33
+  },
+  "review": {
+    "important": 1,
+    "fixed": 1,
+    "deferred": 0
+  },
+  "release": {
+    "version": "0.1.2",
+    "sha256": "420206c52c848c595d4458dd121b1e803567a9d26c3f3d154a3fb68e645df746",
+    "oldCopiesUpdated": false
+  }
+}

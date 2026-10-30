@@ -1,0 +1,43 @@
+import {it,expect,afterEach} from 'vitest';
+import {mkdtemp,rm,readFile,writeFile} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {createMemoryRoutes} from '../../packages/host/src/routes/memory.js';
+import {createMemoryChannel} from '../../packages/host/src/memory-channel.js';
+import {memoryRequest,recallReply} from '../../packages/lmstudio-plugin/src/memory/client.js';
+const cleanup:(()=>Promise<unknown>)[]=[];
+afterEach(async()=>{for(const c of cleanup.reverse())await c();cleanup.length=0;});
+it('same owner serves global recall; edit/delete invalidates old grants; restart rotates connection',async()=>{
+ const root=await mkdtemp(join(tmpdir(),'companion-channel-'));cleanup.push(()=>rm(root,{recursive:true,force:true}));
+ let owner=createMemoryRoutes(join(root,'memory'));cleanup.push(()=>owner.close());
+ let channel=createMemoryChannel(join(root,'link'),owner.get);cleanup.push(()=>channel.close());
+ const signal=new AbortController().signal;
+ const save=async(scope='global')=>((await owner.handle('/api/memory','POST',{content:'Синтетическая метка МОСТ-731',pinned:true,category:'note',scope,projectId:scope==='project'?'private':null},signal)).body as any).value;
+ const r=await save();await save('project');await channel.enable();const file=channel.status().file;
+ const read=async()=>recallReply.parse(await memoryRequest(file,{action:'recall',query:'метка'},signal));
+ const first=await read();expect(first.records.map(x=>x.id)).toEqual([r.id]);
+ await owner.handle('/api/memory/'+r.id,'PATCH',{content:'МОСТ-972',pinned:true,category:'note',expectedRevision:1},signal);
+ await expect(memoryRequest(file,{action:'usage',grant:first.grant,refs:first.records.map(({id,revision,reason})=>({id,revision,reason}))},signal)).rejects.toThrow('Память изменилась');
+ const edited=await read();expect(edited.records[0]?.content).toBe('МОСТ-972');
+ await memoryRequest(file,{action:'usage',grant:edited.grant,refs:edited.records.map(({id,revision,reason})=>({id,revision,reason}))},signal);
+ expect(channel.status().usage?.refs[0]?.id).toBe(r.id);
+ await owner.handle('/api/memory/'+r.id,'DELETE',{expectedRevision:2},signal);expect((await read()).records).toEqual([]);
+ const before=JSON.parse(await readFile(file,'utf8'));await channel.close();await owner.close();
+ owner=createMemoryRoutes(join(root,'memory'));channel=createMemoryChannel(join(root,'link'),owner.get);await channel.restore();
+ expect(JSON.parse(await readFile(file,'utf8')).secret).not.toBe(before.secret);expect((await read()).records).toEqual([]);
+ await channel.disable();await expect(readFile(file)).rejects.toThrow();
+},20000);
+it('forged descriptor cannot authenticate and cancellation returns promptly',async()=>{
+ const root=await mkdtemp(join(tmpdir(),'companion-channel-'));cleanup.push(()=>rm(root,{recursive:true,force:true}));
+ const owner=createMemoryRoutes(join(root,'memory'));cleanup.push(()=>owner.close());const channel=createMemoryChannel(join(root,'link'),owner.get);cleanup.push(()=>channel.close());await channel.enable();
+ const file=channel.status().file,d=JSON.parse(await readFile(file,'utf8'));d.secret='0'.repeat(64);const fake=join(root,'fake.json');await writeFile(fake,JSON.stringify(d));
+ await expect(memoryRequest(fake,{action:'recall',query:'secret'},new AbortController().signal)).rejects.toThrow('не подтверждён');
+ await expect(memoryRequest(file,{action:'recall',query:'q'},AbortSignal.abort())).rejects.toThrow();
+},10000);
+it('large Cyrillic candidates do not prevent a short useful record from reaching the tokenizer',async()=>{
+ const root=await mkdtemp(join(tmpdir(),'companion-channel-'));cleanup.push(()=>rm(root,{recursive:true,force:true}));
+ const owner=createMemoryRoutes(join(root,'memory'));cleanup.push(()=>owner.close());const channel=createMemoryChannel(join(root,'link'),owner.get);cleanup.push(()=>channel.close());const store=await owner.get();
+ for(let i=0;i<13;i++)await store.saveMemory({identityKey:'long.'+i,content:'Я'.repeat(16000),scope:'global',projectId:null,sessionId:null,source:'user',pinned:true});
+ const short=await store.saveMemory({identityKey:'short',content:'Краткий полезный ответ',scope:'global',projectId:null,sessionId:null,source:'user',pinned:true});if(!short.ok)throw Error(short.message);
+ await channel.enable();const reply=recallReply.parse(await memoryRequest(channel.status().file,{action:'recall',query:'ответ'},new AbortController().signal));expect(reply.records.some(r=>r.id===short.value.id)).toBe(true);
+},15000);
