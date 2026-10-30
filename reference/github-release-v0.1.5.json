@@ -1,0 +1,32 @@
+{
+  "checkedAt": "2026-10-30T13:18:08.049Z",
+  "tag": "v0.1.5",
+  "sourceCommit": "ef682e75d7a97a32a05368445f235f20466b2293",
+  "releaseId": 429054521,
+  "url": "https://github.com/Aladushek04/LMStudioCompanion/releases/tag/v0.1.5",
+  "publishedAt": "2026-10-30T13:17:24Z",
+  "latest": true,
+  "prerelease": false,
+  "milestone": "A–C accepted; C complete in verified global-memory scope",
+  "files": [
+    {
+      "name": "LMStudioCompanion-0.1.5-win-x64.zip",
+      "url": "https://github.com/Aladushek04/LMStudioCompanion/releases/download/v0.1.5/LMStudioCompanion-0.1.5-win-x64.zip",
+      "bytes": 35333108,
+      "sha256": "ba795dcaaf5ea0362a42c7e83f65b98ec3085d260b36b8f6afccebdabbca83fa",
+      "publicDownloadVerified": true
+    },
+    {
+      "name": "LMStudioCompanion-0.1.5-win-x64.zip.sha256",
+      "url": "https://github.com/Aladushek04/LMStudioCompanion/releases/download/v0.1.5/LMStudioCompanion-0.1.5-win-x64.zip.sha256",
+      "bytes": 102,
+      "sha256": "a2506bd542fbed991795850cf9d1cc77f83b90899a0be5105fbcf5854ab5b67d",
+      "publicDownloadVerified": true
+    }
+  ],
+  "payloadHashesVerified": 33,
+  "installerScenarios": 12,
+  "runtime": "24.22.2",
+  "credentialsUsedForPublicDownload": false,
+  "applicationCodeChangedForPublication": false
+}
