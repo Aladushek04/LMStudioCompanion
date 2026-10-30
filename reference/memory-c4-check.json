@@ -1,0 +1,12 @@
+{
+  "checkedAt": "2026-10-30",
+  "stage": "C4",
+  "version": "0.1.4",
+  "tests": {"passed":154,"files":27,"typecheck":true,"build":true,"browserProposals":true,"browserPreviousMemory":true,"browserOverview":true,"releaseScenarios":12,"proposalsApiOnBundledNode":2},
+  "capture": {"default":"off","modes":["off","explicit","suggest"],"extraLlmGeneration":false,"writesBeforePanelConfirmation":false,"nativeScopes":["global"],"maxPending":32,"pendingTtlMs":3600000,"pendingPersisted":false},
+  "review": {"importantFound":1,"importantFixed":1,"regression":"Window B refresh cannot authorize stale window A save; client baseRevision and atomic store check; RED to GREEN","deferredMinor":[]},
+  "liveRoutingFix": {"freshnessKeywordMisroutedMemoryQuestion":true,"fixed":true,"routingRegressionTestsPassed":true,"explicitInternetRequestsPreserved":true},
+  "nativeAcceptance": {"lmStudio":"0.4.27","model":"google/gemma-4-12b-qat","contextCompressorEnabled":true,"saveProposalWithoutWrite":true,"acceptedViaPanelUi":true,"recallRevision1":true,"editProposalPreservesOldRecord":true,"editAcceptedRevision2":true,"vetoCreatesNoProposal":true,"recallUpdatedValue":true,"forgetProposalBeforeDelete":true,"forgetAcceptedViaPanelUi":true,"testLinkClearedAfterwards":true,"normalChatAfterDelete":true,"deletedIdAbsentNextInjection":true,"model26BTested":false,"heavyCompressionRepeated":false},
+  "delivery": {"archive":"LMStudioCompanion-0.1.4-win-x64.zip","sha256":"8ef35190bf6e0a997dc32ee394c48e544111ad54b6a3d817e14f9553bdd6d63e","payloadHashesVerified":33,"runtime":"24.22.2","ownPluginRevision":3,"ownPluginUpdatedSeparately":true},
+  "nextStage":"C5 not started"
+}
