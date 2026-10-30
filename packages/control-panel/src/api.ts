@@ -20,3 +20,7 @@ export async function previewOfflineMigration<T>(token:string,file:File,signal:A
   const response=await fetch('/api/memory/migration/preview',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/octet-stream','X-Companion-Offline-Copy':'confirmed'},body:file,signal});
   if(!response.ok){const body=await response.json().catch(()=>null) as {message?:string}|null;throw new ApiError(body?.message??'Не удалось проверить копию.',response.status);}return response.json() as Promise<T>;
 }
+export async function uploadDocument<T>(token:string,workspace:string,file:File,signal:AbortSignal):Promise<T>{
+  const response=await fetch('/api/documents/'+workspace+'/files',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/octet-stream','X-Document-Name':encodeURIComponent(file.name)},body:file,signal});
+  if(!response.ok){const body=await response.json().catch(()=>null) as {message?:string}|null;throw new ApiError(body?.message??'Не удалось добавить файл. Обновите список перед повтором.',response.status);}return response.json() as Promise<T>;
+}

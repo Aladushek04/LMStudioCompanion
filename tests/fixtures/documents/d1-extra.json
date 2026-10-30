@@ -1,0 +1,16 @@
+{
+  "synthetic": true,
+  "publicTestPassword": "d1-public-fixture",
+  "files": [
+    {
+      "name": "encrypted.pdf",
+      "bytes": 3259,
+      "sha256": "373ea2a62bd9aaeaa360cfcbac0ad844a2260c3e6240916ea0b6fc80696cb8e2"
+    }
+  ],
+  "independentPdfCheck": {
+    "encrypted": true,
+    "pagesAfterTestDecryption": 2,
+    "expectedMarkersVerified": true
+  }
+}

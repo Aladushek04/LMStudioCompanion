@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-Порядок отдельных заходов D0–D5: [разбивка этапа D](04-documents-stages.md). D0 завершён: [проверка API и границы адаптера](../research/documents-api-report.md); продуктовая реализация D1–D5 не начата. Задача 1 ниже покрывается D0–D2, задача 2 — D3–D5. Задача 3, постоянные библиотеки папок, остаётся этапом G; она не входит в первый выпуск D. Текущая интеграция — собственный препроцессор с сохранением context-compressor; возможность строгого режима ещё требуется доказать, новый владелец генерации не предполагается.
+Порядок отдельных заходов D0–D5: [разбивка этапа D](04-documents-stages.md). D0 завершён: [проверка API](../research/documents-api-report.md); D1 завершён: [ограниченный адаптер чтения](../research/documents-d1-check.md). D2 завершён: [экран](../research/documents-d2-check.md); D3 завершён: [подбор и бюджет](../research/documents-d3-check.md). Подключение к чату и приёмка D4–D5 не реализованы. Задача 1 ниже покрывается D0–D2, задача 2 — D3–D5. Задача 3, постоянные библиотеки папок, остаётся этапом G; она не входит в первый выпуск D. Возможность строгого режима ещё требуется доказать, новый владелец генерации не предполагается.
 
 **Goal:** Пользователь добавляет документы и понимает, что прочитано и откуда взят ответ.
 
@@ -31,7 +31,7 @@
 
 **Files:** создать `packages/documents/src/adapter.ts`, `types.ts`, `tests/documents/attachments.test.ts`, `docs/research/documents-api-report.md`.
 
-**Interfaces:** `prepareDocuments(fileHandles: unknown[], ctx: TurnContext): Promise<OperationResult<DocumentState[]>>`; `DocumentState = {id: string; name: string; contentHash: string; state: 'processing'|'ready'|'unreadable'|'stale'|'error'; reason: string|null}`. `unknown[]` — граница host API, внутри адаптера сразу проверять реальные SDK FileHandle; не использовать непроверенный handle.
+**Interfaces (уточнены D1):** `createDocumentAdapter(backend, limits?).prepareDocuments(inputs: unknown[], ctx: TurnContext, options?): Promise<OperationResult<DocumentState[]>>`. Вход — строгие `{name, bytes: Uint8Array}` выбранных снимков, не произвольный path или сохранённый FileHandle. Собственный SDK backend создаёт/проверяет свой handle перед чтением. [Полная схема DocumentState](../../packages/documents/src/types.ts) включает состояния, source/text hashes, версию, text-range locators и отдельное `retrieval: not-prepared`. [Контракт D1](04-documents-d1.md) заменяет первоначальное предположение о прямой передаче внешних handles; получение bytes нативных вложений ещё требует проверки D4.
 
 - [ ] Тесты `scannedPdfIsUnreadable`, `embeddingUnavailableExplained`, `sameNameDifferentContent`: `expect(scan.state).toBe('unreadable')`; разные contentHash не объединяются; отсутствие embedding не показывает готовность retrieval.
 - [ ] Запустить `npm exec vitest -- run tests/documents/attachments.test.ts`; получить падение.

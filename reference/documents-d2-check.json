@@ -1,0 +1,69 @@
+{
+  "stage": "D2",
+  "checkedAt": "2026-10-30T18:28:50.241Z",
+  "synthetic": true,
+  "generationCalled": false,
+  "modelLoadingCalled": false,
+  "nativeChatTested": false,
+  "newRelease": false,
+  "outcome": "complete",
+  "modelsBefore": {
+    "llm": [
+      "google/gemma-4-12b-qat"
+    ],
+    "embedding": []
+  },
+  "documents": [
+    {
+      "name": "harbor.txt",
+      "state": "ready",
+      "chars": 132,
+      "contentHash": "45b68bb876c9d32860d1d6f5e3031fd0f5983abe840cbfab49b3331eb34d423d",
+      "version": "0ab6fbb0d388d2347f4d758f89fd5cf21cd56d8abe12fb4b6d8d6f4dd1d99a65"
+    },
+    {
+      "name": "text.pdf",
+      "state": "ready",
+      "chars": 159,
+      "contentHash": "00368e95b917b7e2ef4db7f98234dfaec99df35e90690dbf19806615ae949116",
+      "version": "30c4082c8db5d74a807365972663f99b68a141402d8f90e6082164cc27b0b0db"
+    }
+  ],
+  "selectionAndRemovalVerified": true,
+  "sourceBytesUnchanged": true,
+  "modelsAfter": {
+    "llm": [
+      "google/gemma-4-12b-qat"
+    ],
+    "embedding": []
+  },
+  "modelSetUnchanged": true,
+  "acceptance": "complete",
+  "validation": {
+    "vitestPassed": 223,
+    "vitestFiles": 36,
+    "typecheck": "passed",
+    "build": "passed",
+    "edge": [
+      "documents including reload-copy and stale404",
+      "overview",
+      "memory"
+    ],
+    "pageErrors": 0,
+    "review": {
+      "base": "90b5f52e7af0dfd150561c74fbb89ca648877b61",
+      "head": "2da315eab7bb17569ef021913000fc3cd176ba88",
+      "critical": 0,
+      "important": 2,
+      "fixedRedGreen": [
+        "copied tab after reload on overview",
+        "stale polling 404 after clear and upload"
+      ],
+      "repeatReview": false,
+      "declinedToJudge": [],
+      "deferredMinor": [
+        "stale queued job objects after repeated retry/cancel until raw settles"
+      ]
+    }
+  }
+}

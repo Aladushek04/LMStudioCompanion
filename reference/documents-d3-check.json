@@ -1,0 +1,102 @@
+{
+  "stage": "D3",
+  "checkedAt": "2026-10-30T19:14:57.346Z",
+  "synthetic": true,
+  "generationCalled": false,
+  "modelLoadingCalled": false,
+  "nativeChatTested": false,
+  "newRelease": false,
+  "outcome": "complete",
+  "modelsBefore": {
+    "llm": [
+      "google/gemma-4-12b-qat"
+    ],
+    "embedding": []
+  },
+  "checks": [
+    {
+      "name": "harbor.txt",
+      "section": null,
+      "state": "found",
+      "totalTokens": 590,
+      "limit": 26176,
+      "exactCitation": true
+    },
+    {
+      "name": "text.pdf",
+      "section": null,
+      "state": "found",
+      "totalTokens": 590,
+      "limit": 26176,
+      "exactCitation": true
+    },
+    {
+      "name": "retrieval-fixture.txt",
+      "section": "Финансы",
+      "state": "found",
+      "totalTokens": 565,
+      "limit": 26176,
+      "exactCitation": true
+    },
+    {
+      "name": "retrieval-fixture.txt",
+      "section": "Управление",
+      "state": "no-matches"
+    }
+  ],
+  "oldCitationRejected": true,
+  "sourceBytesUnchanged": true,
+  "modelsAfter": {
+    "llm": [
+      "google/gemma-4-12b-qat"
+    ],
+    "embedding": []
+  },
+  "modelSetUnchanged": true,
+  "exactTokenizerTotalsVerified": true,
+  "acceptance": "complete",
+  "evaluation": {
+    "answerableHits": 10,
+    "answerableTotal": 10,
+    "negativeNoMatches": 4,
+    "negativeTotal": 5,
+    "falseRetrievals": [
+      "Кто заместитель координатора?"
+    ],
+    "metric": "Included evidence recall@12; lexical no-match on nonanswerable questions"
+  },
+  "validation": {
+    "completedAt": "2026-10-30T19:41:26.4925933Z",
+    "vitestPassed": 243,
+    "vitestFiles": 39,
+    "typecheck": "passed",
+    "build": "passed",
+    "edge": [
+      "D3 search",
+      "D2 documents",
+      "overview",
+      "memory"
+    ],
+    "pageErrors": 0,
+    "initialConcurrentRun": "one existing memory CRUD test timed out at5000ms; isolated18/18 and serial full243/243 passed unchanged",
+    "nativeReplayedOnResume": false,
+    "review": {
+      "mode": "self-review",
+      "independent": false,
+      "scope": "8dde48d..4736809 plus one RED-GREEN fix pass",
+      "interruptedReviewerResumed": false,
+      "newSubagentsOnResume": 0,
+      "important": 2,
+      "critical": 0,
+      "fixedRedGreen": [
+        "fenced code cannot truncate chapter or lose indexed code comments",
+        "long unrecognized heading-like line remains searchable"
+      ],
+      "repeatReview": false,
+      "declinedToJudge": [],
+      "deferredMinor": [
+        "SourceRecord status conservatively partial even for full short text; exact coverage retained for D4"
+      ]
+    }
+  }
+}
