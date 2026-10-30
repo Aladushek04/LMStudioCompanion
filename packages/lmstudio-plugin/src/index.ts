@@ -4,14 +4,13 @@ import { randomUUID } from 'node:crypto';
 import { access } from 'node:fs/promises';
 import { join } from 'node:path';
 import { configSchematics, globalConfigSchematics } from './config.js';
-import { planWebAction } from '../../core/src/web/intent.js';
 import { WebTurn } from './web/orchestrator.js';
 import { pythonTransport } from './web/python-transport.js';
 import { preprocessWeb } from './web/preprocessor.js';
 import { abortable } from './web/cancellation.js';
 import {memoryRequest,recallReply} from './memory/client.js';
 import {injectMemories,type MemoryRef,type MemoryCandidate} from './memory/inject.js';
-import {captureMode,needsCapture,captureFromChat} from './memory/capture.js';
+import {captureMode,needsCapture,captureFromChat,planMemoryAwareWeb} from './memory/capture.js';
 
 export async function preprocess(ctl: PromptPreprocessorController, message: ChatMessage) {
   const signal=AbortSignal.any([ctl.abortSignal,AbortSignal.timeout(120000)]);
@@ -19,8 +18,9 @@ export async function preprocess(ctl: PromptPreprocessorController, message: Cha
   signal.throwIfAborted();
   const config = ctl.getPluginConfig(configSchematics); const selectedMode = config.get('webMode');
   const mode = selectedMode === 'auto' || selectedMode === 'research' ? selectedMode : 'off';
-  const plan=planWebAction(message.getText(),mode),useMemory=config.get('useMemory')===true;
+  const useMemory=config.get('useMemory')===true;
   const capture=captureMode(config.get('memoryCapture')),captureNeeded=needsCapture(message.getText(),capture);
+  const plan=planMemoryAwareWeb(message.getText(),mode,useMemory,capture);
   if(plan.kind==='none'&&!useMemory&&!captureNeeded)return message;
   const settings = ctl.getGlobalPluginConfig(globalConfigSchematics);
   const python=settings.get('python'), root=settings.get('webRoot');
