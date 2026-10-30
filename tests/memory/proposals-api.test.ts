@@ -13,11 +13,11 @@ it('IPC can propose but cannot confirm; management requires token, origin and ex
  const {call}=await setup(),link=(await(await call('/api/memory/connection','POST',{})).json()).file;
  const reply=await memoryRequest(link,{action:'capture',text:'Запомни: Учебный код МЕДЬ-731',mode:'explicit'} as never,new AbortController().signal) as any;expect(reply.state).toBe('pending');expect((await(await call('/api/memory')).json()).records).toEqual([]);
  const path='/api/memory/proposals/'+reply.proposalId+'/accept';
- expect((await call('/api/memory/proposals','GET',undefined,{Authorization:''})).status).toBe(403);expect((await call(path,'POST',{choice:'save',content:'Правка'},{Origin:'https://foreign.example'})).status).toBe(403);
- expect((await call(path,'POST',{choice:'save',content:'Правка',scope:'project'})).status).toBe(400);
+ expect((await call('/api/memory/proposals','GET',undefined,{Authorization:''})).status).toBe(403);expect((await call(path,'POST',{choice:'save',baseRevision:0,content:'Правка'},{Origin:'https://foreign.example'})).status).toBe(403);
+ expect((await call(path,'POST',{choice:'save',baseRevision:0,content:'Правка',scope:'project'})).status).toBe(400);
  await expect(memoryRequest(link,{action:'accept',proposalId:reply.proposalId} as never,new AbortController().signal)).rejects.toThrow();
  expect((await(await call('/api/memory/proposals')).json()).proposals).toHaveLength(1);
- expect((await call(path,'POST',{choice:'save',content:'Учебный код МЕДЬ-972'})).status).toBe(200);expect((await(await call('/api/memory')).json()).records[0].content).toBe('Учебный код МЕДЬ-972');
+ expect((await call(path,'POST',{choice:'save',baseRevision:0,content:'Учебный код МЕДЬ-972'})).status).toBe(200);expect((await(await call('/api/memory')).json()).records[0].content).toBe('Учебный код МЕДЬ-972');
 },10000);
 it('native capture uses original user message, reports pending rather than saved, with no LLM extraction',async()=>{
  const {call}=await setup(),link=(await(await call('/api/memory/connection','POST',{})).json()).file;const texts:string[]=[];let tokenCalls=0;

@@ -1,11 +1,11 @@
 export type CaptureMode='off'|'explicit'|'suggest';
 export type CaptureIntent={kind:'none'}|{kind:'blocked';message:string}|{kind:'save';content:string;origin:'explicit'|'suggested'}|{kind:'edit';selector:string;content:string;origin:'explicit'}|{kind:'delete';selector:string;origin:'explicit'};
 export const normalizeFact=(text:string)=>text.normalize('NFKC').trim().replace(/\s+/g,' ').toLocaleLowerCase('ru');
-const sourceMaterial=(text:string)=>/[«»“”"`]|^\s*>|https?:\/\/|\bwww\.|(?:цитат|вымышлен|для примера|персонаж|ролевая игра|в статье|на сайте|по сценарию|пример\s*:)/imu.test(text);
+const sourceMaterial=(text:string)=>/[«»“”"`]|^\s*>|<[a-z!/]|https?:\/\/|\bwww\.|(?:цитат|вымышлен|выдуман|например|для примера|персонаж|ролевая игра|в ролевой|в статье|на сайте|по сценарию|пример\s*:)/imu.test(text);
 export function captureMemory(text:string,mode:CaptureMode):CaptureIntent{
  const none:CaptureIntent={kind:'none'},blocked=(message:string):CaptureIntent=>({kind:'blocked',message});
  if(mode==='off')return none;
- if(/не\s+(?:(?:надо|нужно|следует)\s+)?(?:сохраня[йт]|сохран[яи]ть|запомина[йт]|запоминать|записыва[йт]|записывать)/iu.test(text))return blocked('Запрет сохранения учтён. Предложение не создавалось.');
+ if(/не\s+(?:(?:надо|нужно|следует)\s+)?(?:это\s+)?(?:сохраня[йт]|сохран[яи]ть|запомина[йт]|запоминать|запомни|записыва[йт]|записывать|храни|заноси)|без\s+сохранения/iu.test(text))return blocked('Запрет сохранения учтён. Предложение не создавалось.');
  const t=text.trim();if(!t||t.length>4096)return none;
  const scope=/^(?:запомни|сохрани|исправь|измени|забудь).{0,45}(?:для проекта|в проект|временно|для этого чата|на этот чат)/iu.test(t);
  if(scope)return blocked('В чате пока доступна только общая память. Проектные и временные изменения не подготовлены.');

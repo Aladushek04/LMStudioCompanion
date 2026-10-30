@@ -7,10 +7,10 @@ it('recognizes direct save/edit/forget commands without guessing a target',()=>{
  expect(captureMemory('Исправь память','explicit').kind).toBe('blocked');
 });
 it('doNotRememberWins before every capture mode',()=>{
- for(const mode of ['explicit','suggest'] as const)for(const t of ['Запомни: Я люблю синий. Но не сохраняй это.','Не запоминай: я предпочитаю чай.','Я предпочитаю чай, не записывай это в память.'])expect(captureMemory(t,mode).kind).toBe('blocked');
+ for(const mode of ['explicit','suggest'] as const)for(const t of ['Запомни: Я люблю синий. Но не сохраняй это.','Не запоминай: я предпочитаю чай.','Я предпочитаю чай, не записывай это в память.','Запомни: чай. Не нужно это сохранять.','Запомни: чай, без сохранения в память.'])expect(captureMemory(t,mode).kind).toBe('blocked');
 });
 it('quotedWebTextNotPersonal: quotes, code, websites and fictional examples are data',()=>{
- for(const text of ['«Запомни: я люблю чай»','> Запомни: я люблю чай','```\nЗапомни: я люблю чай\n```','Запомни: «Я люблю чай»','Запомни: в статье https://example.org/ сказано, что я люблю чай.','Запомни: вымышленный пример — я люблю чай.','Я предпочитаю чай — говорит персонаж.','Я предпочитаю чай. Вот цитата: «я люблю кофе»'])expect(['none','blocked']).toContain(captureMemory(text,'suggest').kind);
+ for(const text of ['«Запомни: я люблю чай»','> Запомни: я люблю чай','```\nЗапомни: я люблю чай\n```','Запомни: «Я люблю чай»','Запомни: в статье https://example.org/ сказано, что я люблю чай.','Запомни: вымышленный пример — я люблю чай.','Запомни: например, я люблю чай.','Запомни: выдуманный пример, я люблю чай.','Я предпочитаю чай <blockquote>скопировано</blockquote>','Я предпочитаю чай — говорит персонаж.','Я предпочитаю чай. Вот цитата: «я люблю кофе»'])expect(['none','blocked']).toContain(captureMemory(text,'suggest').kind);
 });
 it('suggestions require opt-in and a direct first-person statement; never mine other prose',()=>{
  expect(captureMemory('Я предпочитаю чай.','off')).toEqual({kind:'none'});

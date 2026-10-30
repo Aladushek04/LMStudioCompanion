@@ -2,15 +2,15 @@ import type {MemoryStore} from './store.js';
 import type {OperationResult} from '../../core/src/contracts.js';
 import type {CaptureMode} from './capture.js';
 import {captureMemory,normalizeFact} from './capture.js';
-import {randomUUID} from 'node:crypto';
+import {randomUUID,createHash} from 'node:crypto';
 import {z} from 'zod';
 import {rankMemories} from './retrieval.js';
 export interface ProposalTarget {id:string;revision:number;content:string;category:string;pinned:boolean}
 export interface Proposal {id:string;kind:'save'|'edit'|'delete';origin:'explicit'|'suggested';content:string;createdAt:number;baseRevision:number;targets:ProposalTarget[]}
 export type CaptureReply={state:'pending'|'ignored'|'blocked'|'duplicate'|'unresolved'|'limit';message:string;proposalId?:string};
-export type Acceptance={choice:'save';content:string}|{choice:'replace';content:string;targetId:string;expectedRevision:number}|{choice:'delete';targetId:string;expectedRevision:number};
+export type Acceptance={choice:'save';content:string;baseRevision:number}|{choice:'replace';content:string;targetId:string;expectedRevision:number}|{choice:'delete';targetId:string;expectedRevision:number};
 const content=z.string().trim().min(1).max(16000),target={targetId:z.string().uuid(),expectedRevision:z.number().int().positive()};
-export const acceptanceSchema=z.discriminatedUnion('choice',[z.object({choice:z.literal('save'),content}).strict(),z.object({choice:z.literal('replace'),content,...target}).strict(),z.object({choice:z.literal('delete'),...target}).strict()]);
+export const acceptanceSchema=z.discriminatedUnion('choice',[z.object({choice:z.literal('save'),content,baseRevision:z.number().int().nonnegative()}).strict(),z.object({choice:z.literal('replace'),content,...target}).strict(),z.object({choice:z.literal('delete'),...target}).strict()]);
 type Applied={id:string;kind:'saved'|'updated'|'deleted'};
 const fail=(code:string,message:string):OperationResult<never>=>({ok:false,code,message,retryable:false});
 const ok=<T>(value:T):OperationResult<T>=>({ok:true,value:structuredClone(value),warnings:[]});
@@ -37,7 +37,7 @@ export class ProposalQueue {
   return {state:'pending',proposalId:p.id,message:'Предложение '+(p.kind==='save'?'сохранить запись':p.kind==='edit'?'исправить запись':'забыть запись')+' подготовлено. Пока ничего не изменено. В панели «Память» нажмите «Обновить предложения», затем подтвердите или отклоните.'};
  }
  async accept(id:string,body:Acceptance):Promise<OperationResult<Applied>>{
-  this.prune();const parsed=acceptanceSchema.safeParse(body);if(!parsed.success)return fail('INVALID_INPUT','Проверьте действие и текст предложения.');const signature=JSON.stringify(parsed.data),done=this.receipts.get(id),running=this.busy.get(id);
+  this.prune();const parsed=acceptanceSchema.safeParse(body);if(!parsed.success)return fail('INVALID_INPUT','Проверьте действие и текст предложения.');const signature=createHash('sha256').update(JSON.stringify(parsed.data)).digest('hex'),done=this.receipts.get(id),running=this.busy.get(id);
   if(done)return done.signature===signature?structuredClone(done.result):fail('CONFLICT','Это предложение уже применено с другим текстом. Обновите список.');
   if(running)return running.signature===signature?running.operation:fail('CONFLICT','Предложение уже обрабатывается.');
   const p=this.pending.get(id);if(!p)return fail('NOT_FOUND','Предложение отсутствует или истёк его срок. Обновите список.');
@@ -45,7 +45,8 @@ export class ProposalQueue {
    const store=await this.get(),b=parsed.data;let result:OperationResult<Applied>;
    if(b.choice==='save'){
     if(p.kind!=='save')return fail('INVALID_INPUT','Для этого предложения нельзя создавать новую запись.');
-    const r=await store.saveMemory({identityKey:'chat.'+p.id,content:b.content,scope:'global',projectId:null,sessionId:null,source:p.origin==='explicit'?'chat-explicit':'chat-suggested'},p.baseRevision);result=r.ok?ok({id:r.value.id,kind:'saved'}):r;
+    if(b.baseRevision!==p.baseRevision)return fail('CONFLICT','Это окно показывает устаревшее предложение. Обновите предложение и подтвердите заново.');
+    const r=await store.saveMemory({identityKey:'chat.'+p.id,content:b.content,scope:'global',projectId:null,sessionId:null,source:p.origin==='explicit'?'chat-explicit':'chat-suggested'},b.baseRevision);result=r.ok?ok({id:r.value.id,kind:'saved'}):r;
    }else{
     const t=p.targets.find(t=>t.id===b.targetId);if(!t||t.revision!==b.expectedRevision)return fail('CONFLICT','Выбранная редакция не совпадает с показанным предложением. Обновите предложение.');
     if(b.choice==='delete'){
