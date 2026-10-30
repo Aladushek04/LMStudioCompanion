@@ -28,7 +28,8 @@ try {
   await page.screenshot({ path: join(artifactDir, 'panel-desktop.png'), fullPage: true });
   await page.getByRole('button', { name: 'Память', exact: true }).click();
   await page.getByRole('heading', { name: 'Память', exact: true }).waitFor();
-  assert.match(await page.locator('main').innerText(), /пока недоступно/i);
+  await page.getByRole('button',{name:'Добавить запись',exact:true}).waitFor();
+  assert.match(await page.locator('main').innerText(), /В чат они пока не подставляются/i);
   await page.getByRole('button', { name: 'Обзор', exact: true }).click();
   state.slow = true;
   await page.getByRole('button', { name: 'Проверить подключение', exact: true }).click();

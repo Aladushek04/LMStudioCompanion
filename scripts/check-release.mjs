@@ -41,6 +41,7 @@ try {
   const asset = html.match(/src="([^"]+\.js)"/)[1]; assert.equal((await fetch(origin + asset)).status, 200);
   assert.equal((await fetch(origin + '/api/status')).status, 403);
   assert.doesNotMatch(output, /#token=|Bearer /);
+  await run(join(source, 'runtime/node.exe'), [join(root, 'node_modules/vitest/vitest.mjs'), 'run', 'tests/memory/api.test.ts', '--reporter=dot'], { cwd: root, env, windowsHide: true });
   const ownerBefore = await readFile(join(target, 'data/host/.host-lock'));
   await assert.rejects(script(join(target, 'scripts/Start.ps1'), ['-NoOpen', '-Port', '0']));
   assert.deepEqual(await readFile(join(target, 'data/host/.host-lock')), ownerBefore);
@@ -69,8 +70,8 @@ try {
   const cli = join(source, 'dist/host/src/install-cli.js');
   await assert.rejects(run(process.execPath, [cli, 'preview', '--source', source, '--target', join(work, 'corrupt-target')], { env }));
   await mkdir(join(root, 'data'), { recursive: true });
-  await writeFile(join(root, 'data/release-check.json'), JSON.stringify({ checkedAt: new Date().toISOString(), runtime: '24.22.2', checks: ['archive without npm or LM Studio Node', 'preview without writes', 'PS5.1 Cyrillic/spaces/other cwd', 'static UI and token rejection', 'running host blocks update', 'update', 'rollback', 'running advisor blocks uninstall before changes', 'uninstall preserves personal data and modified launcher', 'runtime cleanup after child exits', 'tampered payload rejected'], ok: true }, null, 2));
-  console.log('Release smoke: 11 checks passed; synthetic profile only.');
+  await writeFile(join(root, 'data/release-check.json'), JSON.stringify({ checkedAt: new Date().toISOString(), runtime: '24.22.2', checks: ['archive without npm or LM Studio Node', 'preview without writes', 'PS5.1 Cyrillic/spaces/other cwd', 'static UI and token rejection', 'memory API with bundled Node runtime', 'running host blocks update', 'update', 'rollback', 'running advisor blocks uninstall before changes', 'uninstall preserves personal data and modified launcher', 'runtime cleanup after child exits', 'tampered payload rejected'], ok: true }, null, 2));
+  console.log('Release smoke: 12 checks passed; synthetic profile only.');
 } finally {
   await stop();
   if (dirname(work) !== join(root, '.tools') || !work.split(/[\\/]/).at(-1).startsWith('release-check-')) throw new Error('Refusing fixture cleanup');
