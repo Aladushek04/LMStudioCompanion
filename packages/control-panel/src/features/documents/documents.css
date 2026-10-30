@@ -1,0 +1,23 @@
+.documents{display:grid;gap:1rem;min-inline-size:0}
+.documents p{margin-block:.5rem;line-height:1.6}
+.document-upload,.document-card{padding:1.25rem;border:1px solid #dce3d9;border-radius:.65rem;background:white;min-inline-size:0}
+.document-upload>label{display:block;font-weight:650}
+.document-upload input[type=file]{display:block;inline-size:100%;min-inline-size:0;max-inline-size:100%;font:inherit;margin-block:1rem;border:1px solid #8a9989;border-radius:.35rem;padding:.6rem}
+.document-actions{display:flex;flex-wrap:wrap;gap:.65rem;align-items:center;margin-block-start:.7rem}
+.document-actions button{min-block-size:3rem}
+.document-list{display:grid;gap:.8rem}
+.document-card-top{display:flex;align-items:start;justify-content:space-between;flex-wrap:wrap;gap:.75rem}
+.document-card h2{font-size:1.05rem;line-height:1.5;margin:0;overflow-wrap:anywhere;min-inline-size:0;max-inline-size:100%}
+.document-state{background:#f0f1eb;padding:.25rem .65rem;border-radius:1rem;font-size:.85rem}
+.document-state.ready{background:#e3efdd;color:#29472b}
+.document-state.error,.document-state.unreadable{background:#f7e9df;color:#713d24}
+.document-hint{font-size:.9rem;color:#52635d;overflow-wrap:anywhere}
+.document-reason{overflow-wrap:anywhere}
+.document-selection{display:flex;align-items:start;gap:.6rem;padding-block:.7rem;min-block-size:3rem;overflow-wrap:anywhere}
+.document-selection input{flex:none;margin-block-start:.25rem;inline-size:1.2rem;block-size:1.2rem;accent-color:#315c45}
+.documents progress{inline-size:min(100%,18rem);accent-color:#315c45}
+.document-preview{box-sizing:border-box;inline-size:min(52rem,calc(100% - 2rem));max-inline-size:calc(100% - 2rem);max-block-size:90dvh;border:1px solid #98aa98;border-radius:.7rem;padding:1.25rem;overflow:auto;color:#233a32}
+.document-preview::backdrop{background:#142b2366}
+.document-preview h2,.document-preview p{overflow-wrap:anywhere;line-height:1.6}
+.document-text{white-space:pre-wrap;overflow-wrap:anywhere;word-break:normal;font:inherit;line-height:1.7;background:#f3f6f0;padding:1rem;border-radius:.4rem;max-block-size:55dvh;overflow:auto;min-inline-size:0}
+@media(max-width:30em){.document-upload,.document-card,.document-preview{padding:.75rem}.document-preview{inline-size:calc(100% - 1rem);max-inline-size:calc(100% - 1rem)}.document-text{padding:.5rem}}

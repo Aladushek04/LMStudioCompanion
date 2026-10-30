@@ -2,13 +2,13 @@ import {randomUUID} from 'node:crypto';
 import {LMStudioClient} from '@lmstudio/sdk';
 import {createDocumentAdapter} from '../../documents/src/adapter.js';
 import {createSdkDocumentBackend} from '../../documents/src/sdk-backend.js';
-import {documentLimits,type DocumentBackend,type DocumentState} from '../../documents/src/types.js';
+import {documentLimits,type DocumentBackend,type DocumentState,type DocumentLimits} from '../../documents/src/types.js';
 import {hash} from '../../documents/src/text.js';
 import type {DocumentItem,DocumentWorkspace} from '../../documents/src/workspace-types.js';
 
 export class DocumentHttpError extends Error {constructor(readonly status:number,message:string){super(message);}}
 export interface DocumentSession {backend:DocumentBackend;close():Promise<void>}
-export interface DocumentsOptions {createSession?:()=>DocumentSession;now?:()=>number;idleMs?:number}
+export interface DocumentsOptions {createSession?:()=>DocumentSession;now?:()=>number;idleMs?:number;limits?:Partial<DocumentLimits>}
 interface Entry {item:DocumentItem;bytes:Uint8Array;document:DocumentState|null;attempt:number;abort:AbortController|null}
 interface Workspace {id:string;entries:Map<string,Entry>;reservedCount:number;reservedBytes:number;touched:number}
 const bad=(message='Некорректный запрос.')=>new DocumentHttpError(400,message);
@@ -40,25 +40,27 @@ export function createDocumentWorkspaces(options:DocumentsOptions={}){
    if(!current())continue;
    const controller=new AbortController();entry.abort=controller;
    entry.item.status='processing';entry.item.revision++;
-   let session:DocumentSession|undefined,raw:Promise<unknown>|undefined,disposing:Promise<void>|undefined;
+   let session:DocumentSession|undefined,raw:Promise<unknown>|undefined,disposing:Promise<void>|undefined,complete=()=>{};
    const dispose=()=>disposing??=(async()=>{if(session)await session.close();})();
    const onAbort=()=>{void dispose().catch(()=>{});};controller.signal.addEventListener('abort',onAbort,{once:true});
    try{
     session=(options.createSession??nativeSession)();closeActive=dispose;
     const backend:DocumentBackend={parse(input){raw=Promise.resolve().then(()=>session!.backend.parse(input));return raw;}};
-    const result=await createDocumentAdapter(backend).prepareDocuments([{name:entry.item.name,bytes:entry.bytes}],{turnId:randomUUID(),chatScopeId:null,sessionId:null,projectId:null,mode:'auto',signal:controller.signal},{isCurrent:current});
-    if(current()){
+    const result=await createDocumentAdapter(backend,options.limits).prepareDocuments([{name:entry.item.name,bytes:entry.bytes}],{turnId:randomUUID(),chatScopeId:null,sessionId:null,projectId:null,mode:'auto',signal:controller.signal},{isCurrent:current});
+    complete=()=>{if(current()){
      if(result.ok){const doc=result.value[0]!;entry.document=doc;Object.assign(entry.item,{status:doc.state==='ready'?'ready':doc.state==='unreadable'?'unreadable':'error',code:doc.code,reason:doc.reason,version:doc.version});}
      else Object.assign(entry.item,{status:result.code==='CANCELLED'?'cancelled':'error',code:result.code,reason:result.message,version:null});
      entry.item.revision++;
-    }
-   }catch{if(current()){entry.document=null;Object.assign(entry.item,{status:'error',code:'API_UNAVAILABLE',reason:'Не удалось подключиться к обработке файлов LM Studio.',version:null,revision:entry.item.revision+1});}}
+    }};
+    if(!result.ok||result.value[0]!.state!=='ready'){complete();complete=()=>{};}
+   }catch{complete=()=>{if(current()){entry.document=null;Object.assign(entry.item,{status:'error',code:'API_UNAVAILABLE',reason:'Не удалось подключиться к обработке файлов LM Studio.',version:null,revision:entry.item.revision+1});}};complete();complete=()=>{};}
    finally{
     controller.signal.removeEventListener('abort',onAbort);
-    try{await dispose();}catch{if(current()){entry.document=null;Object.assign(entry.item,{status:'error',selected:false,version:null,code:'API_UNAVAILABLE',reason:'Не удалось завершить обработку файла. Повторите после перезапуска панели.',revision:entry.item.revision+1});}}
+    try{await dispose();}catch{complete=()=>{if(current()){entry.document=null;Object.assign(entry.item,{status:'error',selected:false,version:null,code:'API_UNAVAILABLE',reason:'Не удалось завершить обработку файла. Повторите после перезапуска панели.',revision:entry.item.revision+1});}};}
     // A cancelled D1 caller may have returned before its raw RPC. Hold the global slot
     // until that RPC settles; a non-cooperative backend must never overlap its successor.
     if(raw)await raw.catch(()=>{});
+    complete();
     closeActive=null;if(entry.abort===controller)entry.abort=null;
    }
   }}finally{running=false;}

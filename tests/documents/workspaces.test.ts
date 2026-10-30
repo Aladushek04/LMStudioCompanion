@@ -27,3 +27,22 @@ it('cancelling queued work never calls parser; deleting active work never publis
  finish({text:'late',parser:{library:'builtIn',version:'1'}});await new Promise(r=>setTimeout(r,10));
  expect(calls).toBe(1);expect(o.snapshot(id).items.map(i=>i.status)).toEqual(['cancelled']);expect(()=>o.preview(id,a!.id)).toThrow('убран');
 });
+it('publishes ready only after dedicated session teardown succeeds',async()=>{
+ let rejectClose:(error:Error)=>void=()=>{};
+ const o=start({createSession:()=>({backend:{async parse(){return {text:'synthetic',parser:{library:'builtIn',version:'1'}};}},close(){return new Promise((_,reject)=>{rejectClose=reject;});}})}),id=o.create().id;
+ o.reserve(id,'a.txt',1).commit(new Uint8Array([65]));
+ await new Promise(r=>setTimeout(r,10));const interim=o.snapshot(id).items[0]!.status;
+ rejectClose(Error('private teardown failure'));await new Promise(r=>setTimeout(r,10));
+ const item=o.snapshot(id).items[0]!;expect(interim).toBe('processing');expect(item.status).toBe('error');expect(item.version).toBe(null);expect(()=>o.preview(id,item.id)).toThrow('пока нет');
+});
+it('shows timeout before a non-cooperative raw call settles, but keeps the next attempt queued',async()=>{
+ let finish:(v:unknown)=>void=()=>{},calls=0;
+ const o=start({limits:{perFileTimeoutMs:10},createSession:()=>({backend:{parse(){calls++;return new Promise(r=>{finish=r;});}},async close(){}})}),id=o.create().id;
+ o.reserve(id,'a.txt',1).commit(new Uint8Array([65]));await new Promise(r=>setTimeout(r,35));
+ const timed=o.snapshot(id).items[0]!;const before=timed.status,code=timed.code;
+ // Release even on the RED path, so teardown never hangs the test runner.
+ if(before==='error')o.action(id,timed.id,'retry',{revision:timed.revision});
+ const next=o.snapshot(id).items[0]!.status;finish({text:'late',parser:{library:'builtIn',version:'1'}});
+ await new Promise(r=>setTimeout(r,0));if(calls>1)finish({text:'new',parser:{library:'builtIn',version:'1'}});
+ expect(before).toBe('error');expect(code).toBe('TIMEOUT');expect(next).toBe('queued');
+});
