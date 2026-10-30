@@ -4,7 +4,7 @@ import {readdir} from 'node:fs/promises';
 import type {OperationResult} from '../../core/src/contracts.js';
 import {acquireMemoryOwnership} from './ownership.js';
 import {prepareMemoryDirectory} from './local-directory.js';
-import {decodeSnapshot,encodeSnapshot,readSnapshot,writeRollback,writeSnapshot} from './persistence.js';
+import {decodeSnapshot,encodeSnapshot,readSnapshot,writeRollback,writeSnapshot,writeImportBackup} from './persistence.js';
 import {identity,memoryInputSchema,memoryPatchSchema,memoryRecordSchema,filterSchema,type MemoryRecord,type MemoryInput,type MemoryPatch,type MemoryFilter,type Snapshot} from './types.js';
 export type {MemoryRecord} from './types.js';
 export interface StoreOptions {beforeCommit?:()=>Promise<void>}
@@ -24,12 +24,36 @@ export class MemoryStore {
     const pending=this.tail.then(async()=>{try{return await run();}catch{return failure('WRITE_FAILED','Изменение памяти не сохранено. Прежнее состояние оставлено без изменений.');}});
     this.tail=pending.then(()=>undefined,()=>undefined);return pending;
   }
-  private async commit(next:Map<string,MemoryRecord>,persistent:boolean):Promise<void>{
+  private async commit(next:Map<string,MemoryRecord>,persistent:boolean,signal?:AbortSignal):Promise<void>{
     if(next.size>10000)throw new Error('Лимит записей.');
-    if(persistent){const snapshot:Snapshot={...this.snapshot,revision:this.snapshot.revision+1,records:[...next.values()].filter(r=>r.scope!=='session')};await writeSnapshot(this.directory,snapshot,this.options.beforeCommit);this.snapshot=snapshot;}
+    if(persistent){const snapshot:Snapshot={...this.snapshot,revision:this.snapshot.revision+1,records:[...next.values()].filter(r=>r.scope!=='session')};await writeSnapshot(this.directory,snapshot,async()=>{await this.options.beforeCommit?.();signal?.throwIfAborted();});this.snapshot=snapshot;}
     this.records=next;
   }
   getRevision():number{return this.snapshot.revision;}
+  private migrationMarker():{id:string;beforeRevision:number}|undefined{let latest:{id:string;beforeRevision:number}|undefined;for(const r of this.records.values()){const m=r.metadata._companionMigration;if(m&&typeof m==='object'&&!Array.isArray(m)&&typeof m.id==='string'&&/^[a-f0-9-]{36}$/.test(m.id)&&typeof m.beforeRevision==='number'&&Number.isSafeInteger(m.beforeRevision)&&(!latest||m.beforeRevision>latest.beforeRevision))latest={id:m.id,beforeRevision:m.beforeRevision};}return latest;}
+  async migrationState(){await this.tail;if(!this.accepting)throw Error('Хранилище памяти закрыто.');const m=this.migrationMarker();return {revision:this.snapshot.revision,known:[...this.records.values()].map(({id,identityKey})=>({id,identityKey})),undo:m&&m.beforeRevision+1===this.snapshot.revision?{id:m.id,revision:this.snapshot.revision}:null};}
+  importRecords(records:MemoryRecord[],expectedRevision:number,signal?:AbortSignal):Promise<OperationResult<{imported:number;skipped:number;revision:number;backupId:string|null}>>{
+    return this.enqueue<{imported:number;skipped:number;revision:number;backupId:string|null}>(async()=>{
+      signal?.throwIfAborted();if(expectedRevision!==this.snapshot.revision)return failure('CONFLICT','Память изменилась. Подготовьте предварительный просмотр заново.');
+      const next=new Map(this.records),seen=new Set<string>();let imported=0,skipped=0;
+      for(const raw of records){const p=memoryRecordSchema.safeParse(raw);if(!p.success||p.data.scope==='session'||p.data.deletedAt!==null||!p.data.identityKey.startsWith('legacy.v2.')||seen.has(p.data.id))return failure('INVALID_INPUT','Некорректный пакет переноса.');const r=p.data;seen.add(r.id);const current=next.get(r.id);if(current){if(current.identityKey!==r.identityKey)return failure('CONFLICT','ID переноса совпал с другой записью.');skipped++;continue;}next.set(r.id,{...r,revision:this.snapshot.revision+1});imported++;}
+      if(!imported)return success({imported,skipped,revision:this.snapshot.revision,backupId:null});
+      const id=randomUUID(),migration={id,beforeRevision:this.snapshot.revision};
+      for(const r of next.values())if(!this.records.has(r.id))r.metadata={...r.metadata,_companionMigration:migration};
+      encodeSnapshot({...this.snapshot,revision:this.snapshot.revision+1,records:[...next.values()].filter(r=>r.scope!=='session')});
+      await writeImportBackup(this.directory,id,this.snapshot);signal?.throwIfAborted();await this.commit(next,true,signal);
+      return success({imported,skipped,revision:this.snapshot.revision,backupId:id});
+    });
+  }
+  undoImport(id:string,expectedRevision:number):Promise<OperationResult<void>>{
+    return this.enqueue(async()=>{
+      const m=this.migrationMarker();if(!m||m.id!==id||this.snapshot.revision!==expectedRevision||m.beforeRevision+1!==expectedRevision)return failure('CONFLICT','После переноса память изменилась или он уже отменён. Откат не применён.');
+      let backup:Snapshot;try{backup=await readSnapshot(join(this.directory,`before-import-${id}.json`));}catch{return failure('INVALID_BACKUP','Резервная копия переноса повреждена или недоступна.');}
+      if(backup.storeId!==this.snapshot.storeId||backup.revision!==m.beforeRevision)return failure('INVALID_BACKUP','Резервная копия не соответствует переносу.');
+      const next=new Map<string,MemoryRecord>();for(const r of backup.records)next.set(r.id,{...r,revision:Math.max(r.revision,this.records.get(r.id)?.revision??0)+1});for(const r of this.records.values())if(r.scope==='session')next.set(r.id,r);
+      await writeRollback(this.directory,this.snapshot);await this.commit(next,true);this.tokens.clear();return success(undefined);
+    });
+  }
   async listMemories(filter:MemoryFilter={}):Promise<MemoryRecord[]>{
     const f=filterSchema.parse(filter);await this.tail;if(!this.accepting)throw new Error('Хранилище памяти закрыто.');
     return structuredClone([...this.records.values()].filter(r=>r.deletedAt===null&&(!f.scope||r.scope===f.scope)&&(!f.projectId||r.projectId===f.projectId)&&(!f.sessionId||r.sessionId===f.sessionId)&&(!f.query||r.content.toLocaleLowerCase('ru').includes(f.query.toLocaleLowerCase('ru')))));

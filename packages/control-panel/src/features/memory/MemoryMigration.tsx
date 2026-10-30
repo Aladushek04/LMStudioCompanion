@@ -1,0 +1,41 @@
+import {useState,useRef,useEffect,useId} from 'react';
+import {request,previewOfflineMigration} from '../../api.js';
+import type {MigrationPreview} from '../../../../host/src/memory-migration.js';
+import type {OperationResult} from '../../../../core/src/contracts.js';
+interface Status {revision:number;undo:{id:string;revision:number}|null}
+interface Imported {imported:number;skipped:number;revision:number;backupId:string|null}
+export function MemoryMigration({token,onApplied}:{token:string;onApplied:()=>Promise<void>}){
+ const [file,setFile]=useState<File|null>(null),[offline,setOffline]=useState(false),[preview,setPreview]=useState<MigrationPreview|null>(null),[selected,setSelected]=useState<Set<string>>(new Set()),[limit,setLimit]=useState(50),[status,setStatus]=useState<Status|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[confirm,setConfirm]=useState<'import'|'undo'|null>(null);
+ const operation=useRef(false),controller=useRef<AbortController|null>(null),active=useRef(true),dialog=useRef<HTMLDialogElement>(null),alert=useRef<HTMLDivElement>(null),uid=useId();
+ useEffect(()=>{active.current=true;return()=>{active.current=false;controller.current?.abort();};},[]);useEffect(()=>{if(error)alert.current?.focus();},[error]);
+ useEffect(()=>{if(!confirm)return;const d=dialog.current!;d.showModal();return()=>d.close();},[confirm]);
+ async function run(action:()=>Promise<void>){if(operation.current)return;operation.current=true;setBusy(true);setError('');setNotice('');try{await action();}catch(e){if(active.current)setError((e instanceof Error?e.message:'Связь с Companion прервана.')+' Перед повтором проверьте список памяти и состояние отката.');}finally{operation.current=false;if(active.current)setBusy(false);}}
+ async function refreshStatus(){const s=await request<Status>(token,'/api/memory/migration/status');if(active.current)setStatus(s);}
+ async function clearPreview(){if(!preview)return;await request(token,'/api/memory/migration/discard','POST',undefined,{previewId:preview.id});if(active.current){setPreview(null);setSelected(new Set());}}
+ async function inspect(){await run(async()=>{if(!file||!offline)throw Error('Выберите offline-копию и подтвердите остановку старого владельца.');await clearPreview();const c=new AbortController();controller.current=c;const p=await previewOfflineMigration<MigrationPreview>(token,file,c.signal);if(active.current){setPreview(p);setSelected(new Set());setLimit(50);}await refreshStatus();});}
+ async function apply(){await run(async()=>{
+  if(!preview||!selected.size||!offline)throw Error('Выберите записи и подтвердите offline-копию.');const result=await request<OperationResult<Imported>>(token,'/api/memory/migration/apply','POST',undefined,{previewId:preview.id,baseRevision:preview.baseRevision,ids:[...selected]});if(!result.ok)throw Error(result.message);
+  if(active.current){setPreview(null);setSelected(new Set());setNotice('Перенос завершён. Добавлено записей: '+result.value.imported+'. Резервная копия создана.');}try{await onApplied();await refreshStatus();}catch{if(active.current)setError('Перенос подтверждён, но список не обновился. Нажмите «Обновить список» и «Проверить откат».');}
+ });}
+ async function undo(){await run(async()=>{if(!status?.undo)throw Error('Доступного отката нет.');const result=await request<OperationResult<void>>(token,'/api/memory/migration/undo','POST',undefined,{id:status.undo.id,expectedRevision:status.undo.revision});if(!result.ok)throw Error(result.message);if(active.current)setNotice('Перенос отменён.');try{await onApplied();await refreshStatus();}catch{if(active.current)setError('Откат подтверждён, но список не обновился. Обновите список памяти.');}});}
+ return <details className="notice"><summary>Перенос прежней памяти</summary>
+  <p>Закройте LM Studio и прежний persistent-memory, затем сделайте отдельную копию memory.db в другую папку. Выбирайте здесь эту offline-копию. Companion не ищет и не открывает живую базу сам; исходный файл не изменяется.</p>
+  <p>Поддерживаются SQLite persistent-memory v2 и обменный JSON v2 до 8 MiB. Временные записи пропускаются. Проектные можно перенести в список, но в чат по-прежнему подставляется только общая память.</p>
+  <form action="/api/memory/migration/preview" method="post" onSubmit={e=>{e.preventDefault();void inspect();}}><fieldset disabled={busy}>
+   <label>Offline-копия памяти<input type="file" name="offlineCopy" accept=".db,.sqlite,.json" required onChange={e=>{setFile(e.target.files?.[0]??null);setPreview(null);setSelected(new Set());if(preview)void run(clearPreview);}}/></label>
+   <label className="memory-check"><input type="checkbox" name="offlineConfirmed" checked={offline} required onChange={e=>setOffline(e.target.checked)}/>Старый владелец остановлен; выбрана отдельная offline-копия</label>
+   <button className="secondary" type="submit">Показать записи копии</button>
+  </fieldset></form>
+  <p role="status">{busy?'Выполняем операцию переноса…':notice}</p>{error&&<div ref={alert} className="notice error" role="alert" tabIndex={-1}>{error}</div>}
+  {preview&&<section aria-label="Предварительный просмотр переноса"><p>В копии: {preview.sourceCount}. Временных пропущено: {preview.skippedSessions}. Уже перенесено или забыто: {preview.alreadyPresent}. Доступно новых: {preview.records.length}.</p>
+   <p>Текущие записи не перезаписываются. Разные ID автоматически по смыслу не объединяются: проверьте возможные противоречия с вашей памятью. Выбрано: {selected.size}. Просмотр действует 10 минут.</p>
+   <div className="memory-actions"><button className="secondary" disabled={busy} onClick={()=>setSelected(new Set(preview.records.map(r=>r.id)))}>Выбрать все новые</button><button className="secondary" disabled={busy} onClick={()=>setSelected(new Set())}>Снять выбор</button><button className="secondary" disabled={busy} onClick={()=>void run(clearPreview)}>Закрыть просмотр</button></div>
+   {preview.records.slice(0,limit).map((r,i)=><div key={r.id} className="memory-record"><label><input type="checkbox" aria-label={'Перенести запись '+(i+1)} checked={selected.has(r.id)} disabled={busy} onChange={e=>setSelected(prev=>{const next=new Set(prev);if(e.target.checked)next.add(r.id);else next.delete(r.id);return next;})}/>{r.scope==='global'?'Общая память':'Проект: '+r.projectId}</label><p className="memory-text">{r.content}</p><small>Категория: {r.category} · Источник в копии: {r.source}</small></div>)}
+   {limit<preview.records.length&&<button className="secondary" disabled={busy} onClick={()=>setLimit(limit+50)}>Показать ещё 50 записей копии</button>}
+   <button className="primary" disabled={busy} onClick={()=>{if(!selected.size)setError('Выберите хотя бы одну запись.');else setConfirm('import');}}>Перенести выбранные</button>
+  </section>}
+  <div className="memory-actions"><button className="secondary" disabled={busy} onClick={()=>void run(refreshStatus)}>Проверить откат</button><button className="secondary" disabled={busy||!status?.undo} onClick={()=>setConfirm('undo')}>Отменить последний перенос</button></div>
+  <p className="memory-hint">Откат доступен до последующего изменения постоянной памяти. Он не стирает ваши более поздние правки; при их наличии операция остановится. Резервные копии остаются в каталоге памяти Companion.</p>
+  {confirm&&<dialog ref={dialog} aria-labelledby={uid+'-title'} onClose={()=>{const accepted=dialog.current?.returnValue==='apply';if(dialog.current)dialog.current.returnValue='';const choice=confirm;setConfirm(null);if(accepted)void(choice==='import'?apply():undo());}}><h3 id={uid+'-title'}>{confirm==='import'?'Подтвердить перенос?':'Отменить последний перенос?'}</h3><p>{confirm==='import'?'Будет добавлено выбранных записей: '+selected.size+'. Перед записью создаётся проверенная резервная копия текущей памяти.':'Вернётся состояние постоянной памяти перед последним переносом. Старые чаты и summaries не переписываются.'}</p><form method="dialog" className="memory-actions"><button autoFocus className="secondary" value="cancel">Отмена</button><button className="primary" value="apply">{confirm==='import'?'Подтвердить перенос':'Подтвердить откат'}</button></form></dialog>}
+ </details>;
+}

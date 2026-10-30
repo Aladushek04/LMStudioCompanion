@@ -3,6 +3,7 @@ import {z} from 'zod';
 import {openMemoryStore,type MemoryStore,type StoreOptions} from '../../../memory/src/store.js';
 import type {OperationResult} from '../../../core/src/contracts.js';
 import {ProposalQueue,acceptanceSchema} from '../../../memory/src/proposals.js';
+import {createMigrationService} from '../memory-migration.js';
 const create=z.object({content:z.string().trim().min(1).max(16000),category:z.string().trim().min(1).max(100),pinned:z.boolean(),scope:z.enum(['global','project']),projectId:z.string().trim().min(1).max(200).nullable()}).strict().refine(r=>r.scope==='project'?r.projectId!==null:r.projectId===null);
 const edit=z.object({content:z.string().trim().min(1).max(16000),category:z.string().trim().min(1).max(100),pinned:z.boolean(),expectedRevision:z.number().int().positive()}).strict();
 const remove=z.object({expectedRevision:z.number().int().positive()}).strict();
@@ -18,10 +19,12 @@ export function createMemoryRoutes(directory:string,options:StoreOptions={}){
     return pending;
   };
   const proposals=new ProposalQueue(get);
+  const migration=createMigrationService(get);
   return {
-    get,proposals,
+    get,proposals,migration,
     async handle(path:string,method:string,body:unknown,signal:AbortSignal):Promise<Response>{
       signal.throwIfAborted();
+      if(path.startsWith('/api/memory/migration/'))return migration.handle(path,method,body,signal);
       if(path==='/api/memory/proposals'&&method==='GET')return {status:200,body:{proposals:proposals.list()}};
       const proposal=/^\/api\/memory\/proposals\/([a-f0-9-]{36})\/(accept|reject|refresh)$/.exec(path);
       if(proposal&&method==='POST'){
@@ -45,6 +48,6 @@ export function createMemoryRoutes(directory:string,options:StoreOptions={}){
       if(method==='PATCH'){const {expectedRevision,...patch}=edit.parse(body);return result(await store.updateMemory(id,patch,expectedRevision));}
       return result(await store.deleteMemory(id,remove.parse(body).expectedRevision));
     },
-    async close(){closing=true;const store=await pending?.catch(()=>null);await store?.close();},
+    async close(){closing=true;migration.close();const store=await pending?.catch(()=>null);await store?.close();},
   };
 }
