@@ -32,3 +32,8 @@ export async function writeRollback(directory:string,snapshot:Snapshot):Promise<
   const file=join(directory,`before-restore-${randomUUID()}.json`);const handle=await open(file,'wx',0o600);
   try{await handle.writeFile(encodeSnapshot(snapshot),'utf8');await handle.sync();}finally{await handle.close();}
 }
+export async function writeImportBackup(directory:string,id:string,snapshot:Snapshot):Promise<void>{
+  const file=join(directory,`before-import-${id}.json`),handle=await open(file,'wx',0o600);
+  try{await handle.writeFile(encodeSnapshot(snapshot),'utf8');await handle.sync();}finally{await handle.close();}
+  const checked=await readSnapshot(file);if(checked.storeId!==snapshot.storeId||checked.revision!==snapshot.revision)throw Error('Не удалось проверить резервную копию.');
+}

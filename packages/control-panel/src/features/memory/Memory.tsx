@@ -4,6 +4,8 @@ import type {OperationResult} from '../../../../core/src/contracts.js';
 import type {MemoryRecord} from '../../../../memory/src/types.js';
 import {MemoryEditor,type MemoryDraft} from './MemoryEditor.js';
 import {MemoryConnection} from './MemoryConnection.js';
+import {MemoryProposals} from './MemoryProposals.js';
+import {MemoryMigration} from './MemoryMigration.js';
 function Confirmation({title,description,action,onConfirm,onCancel}:{title:string;description:string;action:string;onConfirm:()=>void;onCancel:()=>void}){
   const ref=useRef<HTMLDialogElement>(null);
   useEffect(()=>{const dialog=ref.current!;dialog.showModal();return()=>dialog.close();},[]);
@@ -44,6 +46,8 @@ export function Memory({token}:{token:string}){
   return <section className="memory" aria-label="Управление памятью">
     <div className="notice">Здесь — собственные записи Companion. Подстановка в чат включается отдельно. Прежняя память плагина не переносится автоматически.</div>
     <MemoryConnection token={token}/>
+    <MemoryMigration token={token} onApplied={()=>reload()}/>
+    <MemoryProposals token={token} onApplied={()=>reload()}/>
     <div className="memory-actions"><button className="primary" disabled={busy||loading||!loaded||!!editing} onClick={()=>{setError('');setNotice('');setEditing({record:null,key:crypto.randomUUID()});}}>Добавить запись</button><button className="secondary" disabled={busy||loading} onClick={()=>{setError('');void reload().catch(failure);}}>Обновить список</button><button className="secondary" disabled={busy||loading||!loaded} onClick={()=>void exportMemory()}>Экспортировать память</button></div>
     {error&&<div ref={alert} className="notice error" role="alert" tabIndex={-1}>{error}</div>}
     <p role="status" className="memory-status">{loading?'Загружаем память…':busy?'Выполняем операцию…':notice}</p>
@@ -52,7 +56,7 @@ export function Memory({token}:{token:string}){
     <div className="memory-filters"><label>Поиск по памяти<input type="search" name="memoryQuery" autoComplete="off" value={query} onChange={e=>{setQuery(e.target.value);setLimit(50);}}/></label><label>Область записей<select name="memoryScopeFilter" value={scope} onChange={e=>{setScope(e.target.value);setLimit(50);}}><option value="all">Все записи</option><option value="global">Общая память</option><option value="project">Проекты</option></select></label><label>Фильтр проекта<select name="memoryProjectFilter" value={project} onChange={e=>{setProject(e.target.value);setLimit(50);}}><option value="">Все проекты</option>{projects.map(p=><option key={p} value={p}>{p}</option>)}</select></label></div>
     {loaded&&<p>{filtered.length?`Найдено записей: ${filtered.length}. Показано: ${Math.min(limit,filtered.length)}.`:records.length?'По выбранным условиям записей нет.':'Записей пока нет. Добавьте первую запись.'}</p>}
     <div className="memory-list">{filtered.slice(0,limit).map(r=><article key={r.id} className="memory-record">
-      <div className="memory-record-meta"><span>{r.scope==='global'?'Общая память':r.scope==='session'?'Временно':'Проект: '+r.projectId}</span>{r.pinned&&<strong>Закреплено</strong>}<span>Источник: {r.source==='user'?'Добавлено вручную':r.source}</span><span>Изменено: {new Date(r.updatedAt).toLocaleString('ru-RU')}</span></div>
+      <div className="memory-record-meta"><span>{r.scope==='global'?'Общая память':r.scope==='session'?'Временно':'Проект: '+r.projectId}</span>{r.pinned&&<strong>Закреплено</strong>}<span>Источник: {r.source==='user'?'Добавлено вручную':r.source==='chat-explicit'?'Команда из чата, подтверждена':r.source==='chat-suggested'?'Предложение из чата, подтверждено':r.source}</span><span>Изменено: {new Date(r.updatedAt).toLocaleString('ru-RU')}</span></div>
       <p className="memory-text">{r.content}</p><div className="memory-actions"><button className="secondary" disabled={busy||!!editing} onClick={()=>{setError('');setNotice('');setEditing({record:r,key:crypto.randomUUID()});}}>Изменить</button><button className="secondary" disabled={busy||!!editing} onClick={()=>setConfirm({kind:'delete',record:r})}>Забыть</button></div>
     </article>)}</div>
     {filtered.length>limit&&<button className="secondary" onClick={()=>setLimit(limit+50)}>Показать ещё</button>}

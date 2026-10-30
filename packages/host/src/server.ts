@@ -29,12 +29,12 @@ async function assetsFromBuild(): Promise<Map<string, Asset>> {
   }
   return assets;
 }
-function bodyJson(req: IncomingMessage, signal: AbortSignal): Promise<unknown> {
+function bodyJson(req: IncomingMessage, signal: AbortSignal,maximum=65536): Promise<unknown> {
   if (req.headers['content-type']?.split(';')[0]?.trim() !== 'application/json') throw new HttpError(415, 'Ожидается JSON.');
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = []; let size = 0; let rejected = false;
     const fail = (error: Error) => { if (!rejected) { rejected = true; reject(error); } };
-    req.on('data', (chunk: Buffer) => { size += chunk.length; if (size > 65536) fail(new HttpError(413, 'Запрос слишком большой.')); else if (!rejected) chunks.push(chunk); });
+    req.on('data', (chunk: Buffer) => { size += chunk.length; if (size > maximum) fail(new HttpError(413, 'Запрос слишком большой.')); else if (!rejected) chunks.push(chunk); });
     req.once('aborted', () => fail(new HttpError(499, 'Запрос отменён.')));
     req.once('error', () => fail(new HttpError(400, 'Не удалось прочитать запрос.')));
     req.once('end', () => {
@@ -43,6 +43,11 @@ function bodyJson(req: IncomingMessage, signal: AbortSignal): Promise<unknown> {
       catch { fail(new HttpError(400, 'Некорректный JSON.')); }
     });
   });
+}
+function migrationBytes(req:IncomingMessage,signal:AbortSignal):Promise<Buffer>{
+ if(req.headers['content-type']!=='application/octet-stream')throw new HttpError(415,'Выберите offline-копию файла.');
+ if(req.headers['x-companion-offline-copy']!=='confirmed')throw new HttpError(400,'Подтвердите остановку прежнего владельца и выбор offline-копии.');
+ return new Promise((resolve,reject)=>{let size=0,failed=false;const chunks:Buffer[]=[];const fail=(error:Error)=>{if(!failed){failed=true;reject(error);}};req.on('data',(chunk:Buffer)=>{size+=chunk.length;if(size>8*1024*1024)fail(new HttpError(413,'Копия превышает 8 MiB.'));else if(!failed)chunks.push(chunk);});req.once('aborted',()=>fail(new HttpError(499,'Загрузка отменена.')));req.once('error',()=>fail(new HttpError(400,'Не удалось прочитать копию.')));req.once('end',()=>{if(failed)return;try{signal.throwIfAborted();resolve(Buffer.concat(chunks));}catch{fail(new HttpError(499,'Загрузка отменена.'));}});});
 }
 
 /** Loopback management API; токен запуска не выводится в журнал и не включается в HTML. */
@@ -56,7 +61,7 @@ export async function startManagementServer(settingsDir: string, signal: AbortSi
     const settings = new SettingsStore(settingsDir); await settings.readSettings();
     const assets = options.assets ?? await assetsFromBuild();
     const memory=createMemoryRoutes(join(settingsDir,'memory'),options.memoryOptions);
-    const memoryChannel=createMemoryChannel(join(settingsDir,'memory-channel'),memory.get);
+    const memoryChannel=createMemoryChannel(join(settingsDir,'memory-channel'),memory.get,memory.proposals);
     const token = randomBytes(32).toString('hex');
     const shutdown = new AbortController(); let report: CapabilityReport | null = null; let checking = false;
     const server = createServer(); server.requestTimeout = 10000; server.headersTimeout = 10000; server.timeout = 15000;
@@ -84,6 +89,7 @@ export async function startManagementServer(settingsDir: string, signal: AbortSi
           const credential = req.headers.authorization ?? ''; const expected = 'Bearer ' + token;
           if (Buffer.byteLength(credential) !== Buffer.byteLength(expected) || !timingSafeEqual(Buffer.from(credential), Buffer.from(expected))) throw new HttpError(403, 'Откройте панель через ярлык запуска.');
           if (req.method !== 'GET' && req.headers.origin !== origin) throw new HttpError(403, 'Не подтверждён источник запроса.');
+          if(path==='/api/memory/migration/preview'&&req.method==='POST'){const bytes=await migrationBytes(req,operationSignal),result=await memory.migration.preview(bytes,operationSignal);respond(res,result.status,result.body);return;}
           if(path==='/api/memory/connection'){
             if(req.method==='POST'||req.method==='DELETE'){
               const body=await bodyJson(req,operationSignal);if(!body||typeof body!=='object'||Array.isArray(body)||Object.keys(body).length)throw new HttpError(400,'Ожидается пустой объект.');
@@ -92,7 +98,7 @@ export async function startManagementServer(settingsDir: string, signal: AbortSi
             respond(res,200,memoryChannel.status());return;
           }
           if(path==='/api/memory'||path.startsWith('/api/memory/')){
-            const body=['POST','PATCH','DELETE'].includes(req.method??'')?await bodyJson(req,operationSignal):undefined;
+            const body=['POST','PATCH','DELETE'].includes(req.method??'')?await bodyJson(req,operationSignal,path==='/api/memory/migration/apply'?512*1024:65536):undefined;
             const result=await memory.handle(path,req.method??'GET',body,operationSignal);
             if(result.download)res.setHeader('Content-Disposition','attachment; filename="companion-memory.json"');
             respond(res,result.status,result.body);return;

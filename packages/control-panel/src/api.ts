@@ -15,3 +15,8 @@ export async function request<T>(token: string, path: string, method = 'GET', si
   }
   return await response.json() as T;
 }
+export async function previewOfflineMigration<T>(token:string,file:File,signal:AbortSignal):Promise<T>{
+  if(!file.size||file.size>8*1024*1024)throw Error('Выберите непустую offline-копию до 8 MiB.');
+  const response=await fetch('/api/memory/migration/preview',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/octet-stream','X-Companion-Offline-Copy':'confirmed'},body:file,signal});
+  if(!response.ok){const body=await response.json().catch(()=>null) as {message?:string}|null;throw new ApiError(body?.message??'Не удалось проверить копию.',response.status);}return response.json() as Promise<T>;
+}
