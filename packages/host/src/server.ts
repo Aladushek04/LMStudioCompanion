@@ -13,10 +13,12 @@ import { acquireSettingsOwnership } from './ownership.js';
 import {createMemoryRoutes} from './routes/memory.js';
 import {createMemoryChannel} from './memory-channel.js';
 import type {StoreOptions} from '../../memory/src/store.js';
+import {createDocumentsRoutes} from './routes/documents.js';
+import type {DocumentsOptions} from './document-workspaces.js';
 
 export interface Asset { content: Buffer; type: string }
 export interface ManagementServer { origin: string; token: string; close(): Promise<void> }
-interface ServerOptions { port?: number; probe?: (signal: AbortSignal) => Promise<CapabilityReport>; assets?: Map<string, Asset>; memoryOptions?:StoreOptions }
+interface ServerOptions { port?: number; probe?: (signal: AbortSignal) => Promise<CapabilityReport>; assets?: Map<string, Asset>; memoryOptions?:StoreOptions; documentsOptions?:DocumentsOptions }
 class HttpError extends Error { constructor(readonly status: number, message: string) { super(message); } }
 
 async function assetsFromBuild(): Promise<Map<string, Asset>> {
@@ -61,6 +63,7 @@ export async function startManagementServer(settingsDir: string, signal: AbortSi
     const settings = new SettingsStore(settingsDir); await settings.readSettings();
     const assets = options.assets ?? await assetsFromBuild();
     const memory=createMemoryRoutes(join(settingsDir,'memory'),options.memoryOptions);
+    const documents=createDocumentsRoutes(options.documentsOptions);
     const memoryChannel=createMemoryChannel(join(settingsDir,'memory-channel'),memory.get,memory.proposals);
     const token = randomBytes(32).toString('hex');
     const shutdown = new AbortController(); let report: CapabilityReport | null = null; let checking = false;
@@ -89,6 +92,7 @@ export async function startManagementServer(settingsDir: string, signal: AbortSi
           const credential = req.headers.authorization ?? ''; const expected = 'Bearer ' + token;
           if (Buffer.byteLength(credential) !== Buffer.byteLength(expected) || !timingSafeEqual(Buffer.from(credential), Buffer.from(expected))) throw new HttpError(403, 'Откройте панель через ярлык запуска.');
           if (req.method !== 'GET' && req.headers.origin !== origin) throw new HttpError(403, 'Не подтверждён источник запроса.');
+          if(path==='/api/documents'||path.startsWith('/api/documents/')){const result=await documents.handle(req,path,operationSignal);if(result.status===413)res.setHeader('Connection','close');respond(res,result.status,result.body);return;}
           if(path==='/api/memory/migration/preview'&&req.method==='POST'){const bytes=await migrationBytes(req,operationSignal),result=await memory.migration.preview(bytes,operationSignal);respond(res,result.status,result.body);return;}
           if(path==='/api/memory/connection'){
             if(req.method==='POST'||req.method==='DELETE'){
@@ -140,7 +144,7 @@ export async function startManagementServer(settingsDir: string, signal: AbortSi
     const close = () => closing ??= (async () => {
       shutdown.abort(); signal.removeEventListener('abort', onAbort);
       const stopped = new Promise<void>(resolve => server.close(() => resolve())); server.closeAllConnections();
-      await stopped; await Promise.allSettled([...pending]); try{await memoryChannel.close();await memory.close();}finally{await release();}
+      await stopped; await Promise.allSettled([...pending]); try{await documents.close();await memoryChannel.close();await memory.close();}finally{await release();}
     })();
     const onAbort = () => { void close(); }; signal.addEventListener('abort', onAbort, { once: true });
     if (signal.aborted) await close();
