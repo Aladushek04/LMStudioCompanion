@@ -1,0 +1,14 @@
+{
+  "checkedAt": "2026-10-30",
+  "stage": "C5",
+  "version": "0.1.5",
+  "sourceCommit": "ae9032f",
+  "personalMigration": {"required":false,"reason":"User confirmed there are no previous records; ready migration is sufficient","personalDbRead":false,"personalChatRead":false,"syntheticOnly":true},
+  "tests": {"passed":170,"files":30,"typecheck":true,"build":true,"migrationParser":5,"migrationOwner":8,"migrationApi":3,"browserMigration":true,"browserPreviousMemory":true,"browserProposals":true,"browserOverview":true,"releaseScenarios":12,"memoryApiAndMigrationOnBundledNode":15},
+  "migration": {"formats":["SQLite user_version=2 ordinary memories table","Companion persistent-memory-v2 JSON exchange format"],"upstreamJsonExportAssumed":false,"sourceOpenedByPath":false,"sqliteDeserializedInRam":true,"sqliteMinimumNode":"24.16.0","maxBytes":8388608,"maxRows":10000,"maxPreviews":2,"previewTtlMs":600000,"applyMaxJsonBytes":524288,"otherJsonMaxBytes":65536,"previewWrites":false,"confirmationRequired":true,"sourceModified":false,"sessionSkipped":true,"unknownFieldsPreserved":true,"repeatIdDoesNotDuplicateOrResurrect":true,"crossIdSemanticMerge":false,"atomicOwnerWrite":true,"backupBeforeCommit":true,"undoAfterRestart":true,"undoBlockedAfterPermanentChanges":true,"ramSessionPreservedByUndo":true,"snapshotRootSchemaChanged":false,"monotonicRevisionsAcrossUndoAndReimport":true},
+  "review": {"importantFound":4,"importantFixed":4,"regressionsRedToGreen":["root envelope amplification","bulk apply JSON limit","SQLite int64 unknown field","raw own __proto__ preservation"],"additionalRedToGreen":["snapshot v1 root compatibility","stale revision after undo and reimport"],"deferredMinor":[]},
+  "liveAcceptance": {"checkedAt":"2026-10-30T12:34:09.129Z","lmStudio":"0.4.27","model":"google/gemma-4-12b-qat","alreadyLoadedOnly":true,"synthetic":true,"importedPermanent":2,"skippedSession":1,"globalInjected":1,"projectNotInjected":true,"modelReturnedImportedValue":true,"undo":true,"afterUndoRefs":[],"normalAnswerAfterUndo":"4","nativeUiRepeated":false,"method":"SDK with actual preprocessor and tokenizer; empty synthetic history","nativeCompressorCompatibilityPreviouslyCheckedIn":["C3","C4"],"ownPluginHooksChanged":false,"extraModelForRecall":false,"model26BTested":false,"heavyCompressionRepeated":false},
+  "delivery": {"archive":"LMStudioCompanion-0.1.5-win-x64.zip","sha256":"d8cdaf4430ef9268e3bc2fd52ef90f79c8303887e44a9d95143e57427fbd5d62","payloadHashesVerified":33,"runtime":"24.22.2","ownPluginRevision":3,"pluginChangedInC5":false},
+  "stageC": {"completeInVerifiedScope":true,"nativeScopes":["global"],"projectStoredWithoutNativeInjection":true,"sessionRamOnlyWithoutNativeInjection":true,"oldMessagesAndSummariesRewritten":false},
+  "nextStage":"D not started"
+}

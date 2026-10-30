@@ -2,13 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-Подэтапы C0–C5 и правило «один заход — один подэтап»: [порядок выполнения](03-memory-stages.md). C0 и C1 завершены; [результаты C1](../research/memory-c1-check.md). C2 выполнен: [экран памяти и проверки](../research/memory-c2-check.md). C3 выполнен для общей памяти: [результаты](../research/memory-c3-check.md). C4: команды и предложения с подтверждением в панели; [результаты](../research/memory-c4-check.md). C5 ещё не выполнен.
+Подэтапы C0–C5 и правило «один заход — один подэтап»: [порядок выполнения](03-memory-stages.md). C0 и C1 завершены; [результаты C1](../research/memory-c1-check.md). C2 выполнен: [экран памяти и проверки](../research/memory-c2-check.md). C3 выполнен для общей памяти: [результаты](../research/memory-c3-check.md). C4: команды и предложения с подтверждением в панели; [результаты](../research/memory-c4-check.md). C5 выполнен: [перенос и проверки](../research/memory-c5-check.md). [Итог C](../research/stage-c-completion.md): в чате доступна общая память, project/session не подключены. Ниже сохранён исходный план; фактический статус и принятые изменения решений фиксирует разбивка C0–C5.
 
 **Goal:** Пользователь видит сохранённые факты и может надёжно управлять ими без знания memory-tools.
 
-**Architecture:** Совместимый адаптер/fork persistent-memory с одним владельцем хранения. Панель и LM Studio обращаются к нему через management API; живая база старого плагина не редактируется вторым процессом.
+**Architecture:** Собственное хранилище Companion с одним владельцем, атомарным snapshot и отдельным каталогом. Панель и адаптер LM Studio обращаются к нему через защищённый loopback API; живая база старого плагина не редактируется. C5 принимает только выбранную пользователем offline-копию.
 
-**Tech Stack:** TypeScript, SQLite/sql.js после проверки лицензии и persistence, существующие TF-IDF/категории, Vitest, локальная панель.
+**Tech Stack:** TypeScript/Zod, собственный версионированный snapshot, лексический подбор с бюджетом, Vitest, React-панель. SQLite v2 при переносе читается в RAM средствами bundled Node 24.22.2; sql.js и новая зависимость не добавлены. JSON v2 — явно помеченный обменный формат Companion, не заявленный экспорт старого плагина.
 
 **Spec:** [DESIGN.md](../DESIGN.md), [текущее поведение](../CURRENT-STATE.md). Зависимость: план 00.
 

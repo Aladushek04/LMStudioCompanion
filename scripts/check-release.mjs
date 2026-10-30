@@ -41,7 +41,7 @@ try {
   const asset = html.match(/src="([^"]+\.js)"/)[1]; assert.equal((await fetch(origin + asset)).status, 200);
   assert.equal((await fetch(origin + '/api/status')).status, 403);
   assert.doesNotMatch(output, /#token=|Bearer /);
-  await run(join(source, 'runtime/node.exe'), [join(root, 'node_modules/vitest/vitest.mjs'), 'run', 'tests/memory/api.test.ts', '--reporter=dot'], { cwd: root, env, windowsHide: true });
+  await run(join(source, 'runtime/node.exe'), [join(root, 'node_modules/vitest/vitest.mjs'), 'run', 'tests/memory/api.test.ts', 'tests/memory/migration-api.test.ts', 'tests/memory/migration.test.ts', '--reporter=dot', '--maxWorkers=1', '--no-file-parallelism'], { cwd: root, env, windowsHide: true });
   const ownerBefore = await readFile(join(target, 'data/host/.host-lock'));
   await assert.rejects(script(join(target, 'scripts/Start.ps1'), ['-NoOpen', '-Port', '0']));
   assert.deepEqual(await readFile(join(target, 'data/host/.host-lock')), ownerBefore);
