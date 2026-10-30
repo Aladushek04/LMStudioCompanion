@@ -25,3 +25,12 @@ lmstudio-mcp.json
 releases/
 runtime/
 .lmstudio/
+
+# Local editor / OS / incremental build leftovers
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+*~
+*.tsbuildinfo

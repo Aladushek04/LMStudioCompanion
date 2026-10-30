@@ -10,7 +10,7 @@
 
 **Spec:** [Исходный план документов](04-documents.md), [DESIGN](../DESIGN.md), [приёмка](../ACCEPTANCE.md), [итог C](../research/stage-c-completion.md).
 
-**Статус:** D0 и D1 завершены 2026-10-30: [исследование API](../research/documents-api-report.md), [адаптер чтения D1](../research/documents-d1-check.md). D2–D5 не начаты; экрана и подключения документов к чату ещё нет.
+**Статус на 2026-10-30:** D0–D3 завершены: [исследование API](../research/documents-api-report.md), [адаптер D1](../research/documents-d1-check.md), [экран D2](../research/documents-d2-check.md), [подбор и бюджет D3](../research/documents-d3-check.md). D4 отложен, D5 впереди. Документы доступны в панели, к действующему чату ещё не подключены. [Текущее состояние](../STATUS.md).
 
 ## Границы и общие правила
 
