@@ -9,6 +9,13 @@ const assets=new Map([['/',{content:Buffer.from('test'),type:'text/html'}]]);
 async function start(dir?:string,beforeCommit?:()=>Promise<void>){const root=dir??await mkdtemp(join(tmpdir(),'companion-memory-api-'));if(!dir)dirs.push(root);const host=await startManagementServer(root,new AbortController().signal,{assets,...(beforeCommit?{memoryOptions:{beforeCommit}}:{})});servers.push(host);return {host,root};}
 async function call(host:ManagementServer,path='/api/memory',method='GET',body?:unknown,extra:Record<string,string>={}){return fetch(host.origin+path,{method,headers:{Authorization:'Bearer '+host.token,Origin:host.origin,...(body===undefined?{}:{'Content-Type':'application/json'}),...extra},...(body===undefined?{}:{body:JSON.stringify(body)})});}
 const draft={content:'Синтетический факт',category:'note',scope:'global',projectId:null,pinned:false};
+it('connection is explicit, protected and returns path without credential',async()=>{
+ const {host}=await start();const path='/api/memory/connection';
+ expect((await call(host,path,'POST',{}, {Origin:'https://foreign.example'})).status).toBe(403);
+ expect((await (await call(host,path)).json()).enabled).toBe(false);
+ const response=await call(host,path,'POST',{});expect(response.status).toBe(200);const state=await response.json();expect(state.enabled).toBe(true);expect(state.file).toContain('connection.json');expect(JSON.stringify(state)).not.toContain('secret');
+ expect((await call(host,path,'DELETE',{})).status).toBe(200);expect((await (await call(host,path)).json()).enabled).toBe(false);
+},10000);
 afterEach(async()=>{for(const s of servers.splice(0))await s.close();for(const d of dirs.splice(0))await rm(d,{recursive:true,force:true});});
 it('memory API creates, edits with revision, exports and survives host restart',async()=>{
   let {host,root}=await start();expect((await (await call(host)).json()).records).toEqual([]);

@@ -17,6 +17,7 @@ export function createMemoryRoutes(directory:string,options:StoreOptions={}){
     return pending;
   };
   return {
+    get,
     async handle(path:string,method:string,body:unknown,signal:AbortSignal):Promise<Response>{
       const id=path.slice('/api/memory/'.length);
       const recordPath=z.string().uuid().safeParse(id).success;

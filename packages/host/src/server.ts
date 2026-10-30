@@ -11,6 +11,7 @@ import { probeCapabilities } from './capabilities.js';
 import { selectIntegration } from '../../lmstudio-plugin/src/integration.js';
 import { acquireSettingsOwnership } from './ownership.js';
 import {createMemoryRoutes} from './routes/memory.js';
+import {createMemoryChannel} from './memory-channel.js';
 import type {StoreOptions} from '../../memory/src/store.js';
 
 export interface Asset { content: Buffer; type: string }
@@ -55,12 +56,14 @@ export async function startManagementServer(settingsDir: string, signal: AbortSi
     const settings = new SettingsStore(settingsDir); await settings.readSettings();
     const assets = options.assets ?? await assetsFromBuild();
     const memory=createMemoryRoutes(join(settingsDir,'memory'),options.memoryOptions);
+    const memoryChannel=createMemoryChannel(join(settingsDir,'memory-channel'),memory.get);
     const token = randomBytes(32).toString('hex');
     const shutdown = new AbortController(); let report: CapabilityReport | null = null; let checking = false;
     const server = createServer(); server.requestTimeout = 10000; server.headersTimeout = 10000; server.timeout = 15000;
     server.listen(options.port ?? 0, '127.0.0.1'); await once(server, 'listening');
     const address = server.address(); if (!address || typeof address === 'string') throw new Error('Не удалось определить адрес панели.');
     const origin = `http://127.0.0.1:${address.port}`;
+    await memoryChannel.restore();
     const expectedHost = `127.0.0.1:${address.port}`;
     const respond = (res: ServerResponse, code: number, value: unknown) => {
       if (!res.destroyed) { res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8' }); res.end(JSON.stringify(value)); }
@@ -81,6 +84,13 @@ export async function startManagementServer(settingsDir: string, signal: AbortSi
           const credential = req.headers.authorization ?? ''; const expected = 'Bearer ' + token;
           if (Buffer.byteLength(credential) !== Buffer.byteLength(expected) || !timingSafeEqual(Buffer.from(credential), Buffer.from(expected))) throw new HttpError(403, 'Откройте панель через ярлык запуска.');
           if (req.method !== 'GET' && req.headers.origin !== origin) throw new HttpError(403, 'Не подтверждён источник запроса.');
+          if(path==='/api/memory/connection'){
+            if(req.method==='POST'||req.method==='DELETE'){
+              const body=await bodyJson(req,operationSignal);if(!body||typeof body!=='object'||Array.isArray(body)||Object.keys(body).length)throw new HttpError(400,'Ожидается пустой объект.');
+              if(req.method==='POST')await memoryChannel.enable();else await memoryChannel.disable();
+            }else if(req.method!=='GET')throw new HttpError(404,'Операция недоступна.');
+            respond(res,200,memoryChannel.status());return;
+          }
           if(path==='/api/memory'||path.startsWith('/api/memory/')){
             const body=['POST','PATCH','DELETE'].includes(req.method??'')?await bodyJson(req,operationSignal):undefined;
             const result=await memory.handle(path,req.method??'GET',body,operationSignal);
@@ -124,7 +134,7 @@ export async function startManagementServer(settingsDir: string, signal: AbortSi
     const close = () => closing ??= (async () => {
       shutdown.abort(); signal.removeEventListener('abort', onAbort);
       const stopped = new Promise<void>(resolve => server.close(() => resolve())); server.closeAllConnections();
-      await stopped; await Promise.allSettled([...pending]); try{await memory.close();}finally{await release();}
+      await stopped; await Promise.allSettled([...pending]); try{await memoryChannel.close();await memory.close();}finally{await release();}
     })();
     const onAbort = () => { void close(); }; signal.addEventListener('abort', onAbort, { once: true });
     if (signal.aborted) await close();

@@ -14,6 +14,13 @@ try{
   const errors=[];
   async function page(){const p=await browser.newPage({viewport:{width:1440,height:1000}});p.on('pageerror',e=>errors.push(e.message));await p.goto(host.origin+'/#token='+host.token);await p.getByRole('button',{name:'Память',exact:true}).click();return p;}
   const a=await page();
+  await a.locator('summary').filter({hasText:'Память в чате'}).click();
+  await a.getByRole('button',{name:'Включить подключение к чату',exact:true}).click();
+  await a.getByRole('button',{name:'Выключить подключение к чату',exact:true}).waitFor();
+  assert.match(await a.getByLabel('Файл подключения памяти',{exact:true}).inputValue(),/connection.json$/);
+  await a.getByRole('button',{name:'Выключить подключение к чату',exact:true}).click();
+  await a.getByRole('button',{name:'Включить подключение к чату',exact:true}).waitFor();
+  await a.locator('summary').filter({hasText:'Память в чате'}).click();
   await a.getByRole('button',{name:'Добавить запись',exact:true}).click({timeout:3000});
   await a.getByLabel('Текст записи').fill('Синтетическая запись для проверки интерфейса');
   await a.getByRole('button',{name:'Сохранить запись',exact:true}).click();

@@ -3,6 +3,7 @@ import {request,ApiError} from '../../api.js';
 import type {OperationResult} from '../../../../core/src/contracts.js';
 import type {MemoryRecord} from '../../../../memory/src/types.js';
 import {MemoryEditor,type MemoryDraft} from './MemoryEditor.js';
+import {MemoryConnection} from './MemoryConnection.js';
 function Confirmation({title,description,action,onConfirm,onCancel}:{title:string;description:string;action:string;onConfirm:()=>void;onCancel:()=>void}){
   const ref=useRef<HTMLDialogElement>(null);
   useEffect(()=>{const dialog=ref.current!;dialog.showModal();return()=>dialog.close();},[]);
@@ -41,7 +42,8 @@ export function Memory({token}:{token:string}){
   const filtered=records.filter(r=>(scope==='all'||r.scope===scope)&&(!project||r.projectId===project)&&(!query||r.content.toLocaleLowerCase('ru').includes(query.toLocaleLowerCase('ru'))));
   const projects=[...new Set(records.map(r=>r.projectId).filter((p):p is string=>p!==null))];
   return <section className="memory" aria-label="Управление памятью">
-    <div className="notice">Здесь — собственные записи Companion. В чат они пока не подставляются. Прежняя память плагина не переносится автоматически.</div>
+    <div className="notice">Здесь — собственные записи Companion. Подстановка в чат включается отдельно. Прежняя память плагина не переносится автоматически.</div>
+    <MemoryConnection token={token}/>
     <div className="memory-actions"><button className="primary" disabled={busy||loading||!loaded||!!editing} onClick={()=>{setError('');setNotice('');setEditing({record:null,key:crypto.randomUUID()});}}>Добавить запись</button><button className="secondary" disabled={busy||loading} onClick={()=>{setError('');void reload().catch(failure);}}>Обновить список</button><button className="secondary" disabled={busy||loading||!loaded} onClick={()=>void exportMemory()}>Экспортировать память</button></div>
     {error&&<div ref={alert} className="notice error" role="alert" tabIndex={-1}>{error}</div>}
     <p role="status" className="memory-status">{loading?'Загружаем память…':busy?'Выполняем операцию…':notice}</p>

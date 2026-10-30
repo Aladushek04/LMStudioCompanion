@@ -9,6 +9,7 @@ export interface PreprocessEnvironment {
   mode: 'off'|'auto'|'research'; showSources: boolean; signal: AbortSignal;
   contextLength: number;
   registry?: SourceRegistry;
+  plan?: WebPlan;
   /** Count the complete rendered history including this candidate, using the selected model. */
   measure(text: string): Promise<number>;
   read(plan: WebPlan): Promise<OperationResult<SourceRecord[]>>;
@@ -18,7 +19,7 @@ export interface PreprocessEnvironment {
 /** No prediction owner and no generation. A failed required read aborts the turn. */
 export async function preprocessWeb(message: ChatMessage, env: PreprocessEnvironment): Promise<ChatMessage> {
   env.signal.throwIfAborted();
-  const original = message.getText(); const plan = planWebAction(original, env.mode);
+  const original = message.getText(); const plan = env.plan ?? planWebAction(original, env.mode);
   if (plan.kind === 'none') return message;
   const stop = (text: string): never => { env.status(text, true); throw new Error(text); };
   if (!Number.isSafeInteger(env.contextLength) || env.contextLength < 4096) stop('Недостаточно подтверждённого контекста для веб-источников.');
