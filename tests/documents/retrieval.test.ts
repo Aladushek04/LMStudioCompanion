@@ -58,3 +58,7 @@ it('atomic source publication preserves IDs and cannot leave a partial batch',()
  expect(()=>registry.registerSources('test-turn',[record,{...record,id:'source-'+randomUUID(),turnId:'other'}])).toThrow();expect(registry.list()).toHaveLength(0);
  registry.registerSources('test-turn',[record]);expect(registry.list()).toEqual([record]);expect(()=>registry.registerSources('test-turn',[record])).toThrow();expect(registry.list()).toEqual([record]);
 });
+it('bounds detected heading metadata and rejects more than 100 headings explicitly',()=>{
+ const oversized=snapshot('Глава 1 '+ 'А'.repeat(10000)+'\nБюджет 123 рубля.');expect(documentSections(oversized.document)).toHaveLength(0);
+ const many=snapshot(Array.from({length:101},(_,i)=>`# Раздел ${i}\nТекст.`).join('\n'));expect(()=>documentSections(many.document)).toThrow('предел');
+});

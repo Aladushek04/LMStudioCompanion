@@ -3,6 +3,7 @@ import {request,uploadDocument,ApiError} from '../../api.js';
 import type {DocumentItem,DocumentWorkspace,DocumentPreviewData} from '../../../../documents/src/workspace-types.js';
 import {DocumentPreview} from './DocumentPreview.js';
 import './documents.css';
+import {DocumentSearch} from './DocumentSearch.js';
 
 const labels:Record<DocumentItem['status'],string>={queued:'Ожидает очереди',processing:'Обрабатывается',ready:'Готов',unreadable:'Текст не извлечён',error:'Ошибка',cancelled:'Отменено'};
 const storageKey='companion-document-workspace';
@@ -10,6 +11,9 @@ export function Documents({token}:{token:string}){
  const [workspace,setWorkspace]=useState<DocumentWorkspace|null>(null),[files,setFiles]=useState<File[]>([]),[busy,setBusy]=useState(false),[uploading,setUploading]=useState(false);
  const [error,setError]=useState(''),[notice,setNotice]=useState(''),[preview,setPreview]=useState<DocumentPreviewData|null>(null);
  const [initialized,setInitialized]=useState(false);
+ const [question,setQuestion]=useState('');
+ const [sectionChoices,setSectionChoices]=useState<Record<string,string[]|null>>({});
+ const [wholeSearch,setWholeSearch]=useState(false);
  const active=useRef(true),operation=useRef(false),current=useRef<DocumentWorkspace|null>(null),input=useRef<HTMLInputElement>(null),upload=useRef<AbortController|null>(null),lifetime=useRef(new AbortController()),generation=useRef(0);
  const lease=useRef<{id:string;release:()=>void}|null>(null);
  async function claim(id:string){
@@ -22,8 +26,8 @@ export function Documents({token}:{token:string}){
    }).catch(reject);
   });
  }
- function apply(next:DocumentWorkspace){if(!active.current)return;current.current=next;setWorkspace(next);setPreview(old=>old&&next.items.some(i=>i.id===old.item.id&&i.status==='ready'&&i.version===old.document.version)?old:null);}
- function reset(){lease.current?.release();lease.current=null;sessionStorage.removeItem(storageKey);current.current=null;if(active.current){setWorkspace(null);setPreview(null);setInitialized(true);}}
+ function apply(next:DocumentWorkspace){if(!active.current)return;current.current=next;setWorkspace(next);setSectionChoices(old=>Object.fromEntries(Object.entries(old).filter(([id])=>next.items.some(i=>i.id===id))));setPreview(old=>old&&next.items.some(i=>i.id===old.item.id&&i.status==='ready'&&i.version===old.document.version)?old:null);}
+ function reset(){lease.current?.release();lease.current=null;sessionStorage.removeItem(storageKey);current.current=null;if(active.current){setWorkspace(null);setPreview(null);setInitialized(true);setSectionChoices({});setWholeSearch(false);}}
  async function create(){const next=await request<DocumentWorkspace>(token,'/api/documents','POST',lifetime.current.signal,{});if(active.current){const claimed=await claim(next.id);if(navigator.locks&&!claimed)throw Error('Не удалось открыть отдельный набор.');if(claimed)sessionStorage.setItem(storageKey,next.id);else{sessionStorage.removeItem(storageKey);setNotice('Браузер не поддерживает восстановление набора: после обновления страницы файлы нужно добавить заново.');}apply(next);}return next;}
  async function refresh(){
   const seq=++generation.current,id=current.current?.id??sessionStorage.getItem(storageKey);
@@ -84,7 +88,8 @@ export function Documents({token}:{token:string}){
    <label className="document-selection"><input type="checkbox" name={'select-'+item.id} disabled={busy||item.status!=='ready'} checked={item.selected} onChange={e=>action(item,'select',e.target.checked)}/>Выбрать «{item.name}» в этой вкладке</label>
    <div className="document-actions">{item.status==='ready'&&<button className="secondary" disabled={busy} onClick={()=>show(item)}>Посмотреть текст</button>}{['queued','processing'].includes(item.status)&&<button className="secondary" disabled={busy} onClick={()=>action(item,'cancel')}>Отменить обработку</button>}{['error','unreadable','cancelled'].includes(item.status)&&<button className="secondary" disabled={busy} onClick={()=>action(item,'retry')}>Повторить</button>}<button className="secondary" disabled={busy} onClick={()=>action(item,'remove')}>Убрать из списка</button></div>
   </article>)}</div>
-  <p className="document-hint">«Готов» означает, что текст извлечён и доступен для просмотра. Подбор фрагментов, выбор глав и ответы по документам появятся на следующих шагах.</p>
+  <p className="document-hint">«Готов» означает, что текст извлечён и доступен для просмотра. Ответы по документам в действующем чате появятся на следующем шаге.</p>
+  {workspace&&<DocumentSearch key={workspace.id+JSON.stringify(workspace.items.map(i=>[i.id,i.revision,i.selected]))} workspace={workspace} token={token} question={question} onQuestion={setQuestion} sections={sectionChoices} onSections={setSectionChoices} whole={wholeSearch} onWhole={setWholeSearch}/>}
   {preview&&<DocumentPreview data={preview} onClose={()=>setPreview(null)}/>}
  </section>;
 }

@@ -6,8 +6,8 @@ import {startManagementServer,type ManagementServer} from '../../packages/host/s
 import type {DocumentTokenizerSession} from '../../packages/host/src/document-tokenizer.js';
 const hosts:ManagementServer[]=[],dirs:string[]=[];
 afterEach(async()=>{for(const h of hosts.splice(0))await h.close();for(const d of dirs.splice(0))await rm(d,{recursive:true,force:true});});
-async function start(createTokenizer:()=>DocumentTokenizerSession=()=>({async prepare(){return {modelIdentifier:'synthetic',contextLength:32768,measure:async(text:string)=>text.length};},async close(){}})){
- const dir=await mkdtemp(join(tmpdir(),'companion-d3-api-'));dirs.push(dir);const h=await startManagementServer(dir,new AbortController().signal,{assets:new Map(),documentsOptions:{createTokenizer,createSession:()=>({backend:{async parse({bytes}){return {text:Buffer.from(bytes).toString(),parser:{library:'builtIn',version:'1'}};}},async close(){}})}});hosts.push(h);return h;
+async function start(createTokenizer:()=>DocumentTokenizerSession=()=>({async prepare(){return {modelIdentifier:'synthetic',contextLength:32768,measure:async(text:string)=>text.length};},async close(){}}),searchDeadlineMs=8000){
+ const dir=await mkdtemp(join(tmpdir(),'companion-d3-api-'));dirs.push(dir);const h=await startManagementServer(dir,new AbortController().signal,{assets:new Map(),documentsOptions:{createTokenizer,searchDeadlineMs,createSession:()=>({backend:{async parse({bytes}){return {text:Buffer.from(bytes).toString(),parser:{library:'builtIn',version:'1'}};}},async close(){}})}});hosts.push(h);return h;
 }
 async function call(h:ManagementServer,path:string,method='GET',body?:unknown,extra:Record<string,string>={}){return fetch(h.origin+path,{method,headers:{Authorization:'Bearer '+h.token,Origin:h.origin,...(body===undefined?{}:{'Content-Type':'application/json'}),...extra},...(body===undefined?{}:{body:JSON.stringify(body)})});}
 async function ready(h:ManagementServer){const path='/api/documents/'+(await (await call(h,'/api/documents','POST',{})).json()).id;const bytes=Buffer.from('# Финансы\nБюджет 187500 рублей.\n# Контакты\nКоординатор Лидия Белова.');await fetch(h.origin+path+'/files',{method:'POST',headers:{Authorization:'Bearer '+h.token,Origin:h.origin,'Content-Type':'application/octet-stream','X-Document-Name':'fixture.txt'},body:bytes});
@@ -42,4 +42,9 @@ it('raw tokenizer work and disposal keep one slot even after caller cancellation
 });
 it('tokenizer failure is an error, not no-match; no raw stack or private path leaks',async()=>{
  const h=await start(()=>({async prepare(){throw Error('C:/private/token.txt');},async close(){}}));const {path,body}=await ready(h);const r=await call(h,path+'/search','POST',body);expect(r.status).toBe(503);expect(JSON.stringify(await r.json())).not.toContain('private');
+});
+it('deadline during non-cooperative preparation returns failure and holds raw slot',async()=>{
+ let release:()=>void=()=>{},measured=0,closed=0;
+ const h=await start(()=>({prepare(){return new Promise(resolve=>{release=()=>resolve({modelIdentifier:'synthetic',contextLength:32768,measure:async()=>{measured++;return 1;}});});},async close(){closed++;}}),20),{path,body}=await ready(h);
+ const response=await call(h,path+'/search','POST',body);expect(response.status).toBe(504);expect((await call(h,path+'/search','POST',body)).status).toBe(409);expect(closed).toBe(1);release();await new Promise(r=>setTimeout(r,0));expect(measured).toBe(0);
 });

@@ -16,8 +16,15 @@
 .document-selection{display:flex;align-items:start;gap:.6rem;padding-block:.7rem;min-block-size:3rem;overflow-wrap:anywhere}
 .document-selection input{flex:none;margin-block-start:.25rem;inline-size:1.2rem;block-size:1.2rem;accent-color:#315c45}
 .documents progress{inline-size:min(100%,18rem);accent-color:#315c45}
+.document-search{padding:1.25rem;border:1px solid #dce3d9;border-radius:.65rem;background:white;min-inline-size:0}
+.document-search textarea,.document-search select{display:block;box-sizing:border-box;inline-size:100%;min-inline-size:0;font:inherit;padding:.65rem;margin-block:.5rem 1rem;border:1px solid #8a9989;border-radius:.35rem}
+.document-search textarea{resize:vertical}
+.document-search fieldset{min-inline-size:0;margin-block:1rem;border:1px solid #bcc9b9;border-radius:.4rem;padding:.75rem}
+.document-search legend,.document-search h2,.document-search h3{overflow-wrap:anywhere;line-height:1.6}
+.document-fragment{padding-block:1rem;border-block-start:1px solid #dce3d9;overflow-wrap:anywhere}
+.document-search-results{min-inline-size:0}
 .document-preview{box-sizing:border-box;inline-size:min(52rem,calc(100% - 2rem));max-inline-size:calc(100% - 2rem);max-block-size:90dvh;border:1px solid #98aa98;border-radius:.7rem;padding:1.25rem;overflow:auto;color:#233a32}
 .document-preview::backdrop{background:#142b2366}
 .document-preview h2,.document-preview p{overflow-wrap:anywhere;line-height:1.6}
 .document-text{white-space:pre-wrap;overflow-wrap:anywhere;word-break:normal;font:inherit;line-height:1.7;background:#f3f6f0;padding:1rem;border-radius:.4rem;max-block-size:55dvh;overflow:auto;min-inline-size:0}
-@media(max-width:30em){.document-upload,.document-card,.document-preview{padding:.75rem}.document-preview{inline-size:calc(100% - 1rem);max-inline-size:calc(100% - 1rem)}.document-text{padding:.5rem}}
+@media(max-width:30em){.document-upload,.document-card,.document-preview,.document-search{padding:.75rem}.document-preview{inline-size:calc(100% - 1rem);max-inline-size:calc(100% - 1rem)}.document-text{padding:.5rem}}

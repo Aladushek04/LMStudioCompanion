@@ -20,7 +20,7 @@ export async function budgetDocumentFragments(found:DocumentFragment[],all:Docum
  retrievalCheck(env);
  const actual=sources(),cov=coverage(),state=!selectedChars?'empty-scope':!found.length?'no-matches':!chosen.length?'budget-omitted':'found';
  const notices:string[]=[];
- if(cov.partial)notices.push('Изучена только часть выбранного текста.');
+ if(cov.partial)notices.push('В блок источников вошла только часть выбранного текста.');
  if(whole&&cov.partial)notices.push('Проверка всего документа не выполнена. Разберите материал по частям.');
  if(omittedBudget)notices.push('Найденные фрагменты частично или полностью не поместились с резервом ответа и инструментов. Это не отсутствие данных.');
  if(omittedLimit)notices.push('Часть фрагментов пропущена из-за лимита проверки или числа источников.');

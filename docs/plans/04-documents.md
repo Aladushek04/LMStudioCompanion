@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-Порядок отдельных заходов D0–D5: [разбивка этапа D](04-documents-stages.md). D0 завершён: [проверка API](../research/documents-api-report.md); D1 завершён: [ограниченный адаптер чтения](../research/documents-d1-check.md). Экран и подключение к чату D2–D5 не реализованы. Задача 1 ниже покрывается D0–D2, задача 2 — D3–D5. Задача 3, постоянные библиотеки папок, остаётся этапом G; она не входит в первый выпуск D. Возможность строгого режима ещё требуется доказать, новый владелец генерации не предполагается.
+Порядок отдельных заходов D0–D5: [разбивка этапа D](04-documents-stages.md). D0 завершён: [проверка API](../research/documents-api-report.md); D1 завершён: [ограниченный адаптер чтения](../research/documents-d1-check.md). D2 завершён: [экран](../research/documents-d2-check.md); D3 завершён: [подбор и бюджет](../research/documents-d3-check.md). Подключение к чату и приёмка D4–D5 не реализованы. Задача 1 ниже покрывается D0–D2, задача 2 — D3–D5. Задача 3, постоянные библиотеки папок, остаётся этапом G; она не входит в первый выпуск D. Возможность строгого режима ещё требуется доказать, новый владелец генерации не предполагается.
 
 **Goal:** Пользователь добавляет документы и понимает, что прочитано и откуда взят ответ.
 

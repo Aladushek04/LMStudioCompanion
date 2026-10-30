@@ -1,0 +1,68 @@
+{
+  "stage": "D3",
+  "checkedAt": "2026-10-30T19:14:57.346Z",
+  "synthetic": true,
+  "generationCalled": false,
+  "modelLoadingCalled": false,
+  "nativeChatTested": false,
+  "newRelease": false,
+  "outcome": "complete",
+  "modelsBefore": {
+    "llm": [
+      "google/gemma-4-12b-qat"
+    ],
+    "embedding": []
+  },
+  "checks": [
+    {
+      "name": "harbor.txt",
+      "section": null,
+      "state": "found",
+      "totalTokens": 590,
+      "limit": 26176,
+      "exactCitation": true
+    },
+    {
+      "name": "text.pdf",
+      "section": null,
+      "state": "found",
+      "totalTokens": 590,
+      "limit": 26176,
+      "exactCitation": true
+    },
+    {
+      "name": "retrieval-fixture.txt",
+      "section": "Финансы",
+      "state": "found",
+      "totalTokens": 565,
+      "limit": 26176,
+      "exactCitation": true
+    },
+    {
+      "name": "retrieval-fixture.txt",
+      "section": "Управление",
+      "state": "no-matches"
+    }
+  ],
+  "oldCitationRejected": true,
+  "sourceBytesUnchanged": true,
+  "modelsAfter": {
+    "llm": [
+      "google/gemma-4-12b-qat"
+    ],
+    "embedding": []
+  },
+  "modelSetUnchanged": true,
+  "exactTokenizerTotalsVerified": true,
+  "acceptance": "implementation-verified-review-pending",
+  "evaluation": {
+    "answerableHits": 10,
+    "answerableTotal": 10,
+    "negativeNoMatches": 4,
+    "negativeTotal": 5,
+    "falseRetrievals": [
+      "Кто заместитель координатора?"
+    ],
+    "metric": "Included evidence recall@12; lexical no-match on nonanswerable questions"
+  }
+}

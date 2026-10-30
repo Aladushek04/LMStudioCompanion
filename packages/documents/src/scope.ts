@@ -8,7 +8,7 @@ export function verifyDocument(doc:DocumentState){
 export function documentSections(doc:DocumentState):DocumentSection[]{
  verifyDocument(doc);const text=doc.text!,headings:{title:string;start:number;level:number}[]=[];
  for(const match of text.matchAll(/^.*$/gm)){
-  const line=match[0],markdown=/^ {0,3}(#{1,6})[ \t]+(.{1,200}?)\s*#*\s*$/.exec(line),numbered=/^(Глава|Раздел)\s+[0-9IVXLCDM]+(?:[.:\s—-].*)?$/i.test(line);
+  const line=match[0],markdown=/^ {0,3}(#{1,6})[ \t]+(.{1,200}?)\s*#*\s*$/.exec(line),numbered=line.length<=200&&/^(Глава|Раздел)\s+[0-9IVXLCDM]+(?:[.:\s—-].*)?$/i.test(line);
   if(markdown||numbered){headings.push({title:markdown?markdown[2]!:line,start:match.index!,level:markdown?markdown[1]!.length:1});if(headings.length>100)throw new RetrievalFailure('LIMIT_EXCEEDED');}
  }
  return headings.map((h,i)=>{const end=headings.slice(i+1).find(next=>next.level<=h.level)?.start??text.length;return {...h,end,id:'section-'+hash(`${doc.version}:${h.start}:${end}`)};});
