@@ -62,3 +62,15 @@ it('bounds detected heading metadata and rejects more than 100 headings explicit
  const oversized=snapshot('Глава 1 '+ 'А'.repeat(10000)+'\nБюджет 123 рубля.');expect(documentSections(oversized.document)).toHaveLength(0);
  const many=snapshot(Array.from({length:101},(_,i)=>`# Раздел ${i}\nТекст.`).join('\n'));expect(()=>documentSections(many.document)).toThrow('предел');
 });
+it('fenced code headings cannot truncate a selected chapter or disappear from searchable body',async()=>{
+ for(const fence of ['```','~~~']){
+  const a=snapshot(`# Финансы\nВводный текст.\n${fence}python\n${'данные '.repeat(300)}\n# Контакты\nГлава 9 Пример кода\n${fence}\nБюджет составляет 187500 рублей.\n# Другое\nБюджет 900 рублей.`);
+  const sections=documentSections(a.document);expect(sections.map(s=>s.title)).toEqual(['Финансы','Другое']);
+  const r=await retrieveDocuments([a],{query:'Бюджет',selection:[selection(a,[sections[0]!.id])],wholeDocument:false},environment());expect(r.ok).toBe(true);if(!r.ok)continue;expect(r.value.state).toBe('found');expect(JSON.stringify(r.value.sources)).toContain('187500');expect(JSON.stringify(r.value.sources)).not.toContain('900 рублей');
+  const code=await retrieveDocuments([a],{query:'Контакты',selection:[selection(a,[sections[0]!.id])],wholeDocument:false},environment());expect(code).toMatchObject({ok:true,value:{state:'found'}});
+ }
+});
+it('unrecognized long heading-like lines remain searchable data',async()=>{
+ const a=snapshot('Глава 1 '+ 'А'.repeat(500)+' Бюджет 187500 рублей.');expect(documentSections(a.document)).toHaveLength(0);
+ const r=await retrieveDocuments([a],{query:'Бюджет',selection:[selection(a)],wholeDocument:false},environment());expect(r).toMatchObject({ok:true,value:{state:'found'}});if(r.ok)expect(JSON.stringify(r.value.sources)).toContain('187500');
+});

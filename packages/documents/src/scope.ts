@@ -1,17 +1,14 @@
 import {documentLimits,type DocumentState} from './types.js';
 import {hash,textVersion} from './text.js';
 import {snapshotSchema,RetrievalFailure,type DocumentScope,type DocumentSnapshot,type ScopedDocument,type DocumentSection} from './retrieval-types.js';
+import {headingLines} from './headings.js';
 
 export function verifyDocument(doc:DocumentState){
  if(doc.state!=='ready'||typeof doc.text!=='string'||!doc.parser||!doc.version||doc.text.length>documentLimits.maxTextChars||doc.sizeBytes>documentLimits.maxFileBytes||doc.textHash!==hash(doc.text)||doc.version!==textVersion(doc.contentHash,doc.parser,doc.textHash))throw new RetrievalFailure('STALE_DOCUMENT');
 }
 export function documentSections(doc:DocumentState):DocumentSection[]{
- verifyDocument(doc);const text=doc.text!,headings:{title:string;start:number;level:number}[]=[];
- for(const match of text.matchAll(/^.*$/gm)){
-  const line=match[0],markdown=/^ {0,3}(#{1,6})[ \t]+(.{1,200}?)\s*#*\s*$/.exec(line),numbered=line.length<=200&&/^(Глава|Раздел)\s+[0-9IVXLCDM]+(?:[.:\s—-].*)?$/i.test(line);
-  if(markdown||numbered){headings.push({title:markdown?markdown[2]!:line,start:match.index!,level:markdown?markdown[1]!.length:1});if(headings.length>100)throw new RetrievalFailure('LIMIT_EXCEEDED');}
- }
- return headings.map((h,i)=>{const end=headings.slice(i+1).find(next=>next.level<=h.level)?.start??text.length;return {...h,end,id:'section-'+hash(`${doc.version}:${h.start}:${end}`)};});
+ verifyDocument(doc);const text=doc.text!,headings=headingLines(text);
+ return headings.map((h,i)=>{const end=headings.slice(i+1).find(next=>next.level<=h.level)?.start??text.length;return {title:h.title,start:h.start,level:h.level,end,id:'section-'+hash(`${doc.version}:${h.start}:${end}`)};});
 }
 export function resolveDocumentScope(raw:DocumentSnapshot[],selection:DocumentScope[]):ScopedDocument[]{
  if(raw.length>5||new Set(raw.map(s=>s.documentId)).size!==raw.length)throw new RetrievalFailure('INVALID_SCOPE');

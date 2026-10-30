@@ -54,7 +54,7 @@
   },
   "modelSetUnchanged": true,
   "exactTokenizerTotalsVerified": true,
-  "acceptance": "implementation-verified-review-pending",
+  "acceptance": "complete",
   "evaluation": {
     "answerableHits": 10,
     "answerableTotal": 10,
@@ -64,5 +64,39 @@
       "Кто заместитель координатора?"
     ],
     "metric": "Included evidence recall@12; lexical no-match on nonanswerable questions"
+  },
+  "validation": {
+    "completedAt": "2026-10-30T19:41:26.4925933Z",
+    "vitestPassed": 243,
+    "vitestFiles": 39,
+    "typecheck": "passed",
+    "build": "passed",
+    "edge": [
+      "D3 search",
+      "D2 documents",
+      "overview",
+      "memory"
+    ],
+    "pageErrors": 0,
+    "initialConcurrentRun": "one existing memory CRUD test timed out at5000ms; isolated18/18 and serial full243/243 passed unchanged",
+    "nativeReplayedOnResume": false,
+    "review": {
+      "mode": "self-review",
+      "independent": false,
+      "scope": "8dde48d..4736809 plus one RED-GREEN fix pass",
+      "interruptedReviewerResumed": false,
+      "newSubagentsOnResume": 0,
+      "important": 2,
+      "critical": 0,
+      "fixedRedGreen": [
+        "fenced code cannot truncate chapter or lose indexed code comments",
+        "long unrecognized heading-like line remains searchable"
+      ],
+      "repeatReview": false,
+      "declinedToJudge": [],
+      "deferredMinor": [
+        "SourceRecord status conservatively partial even for full short text; exact coverage retained for D4"
+      ]
+    }
   }
 }

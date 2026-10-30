@@ -3,7 +3,7 @@ import type {SourceRecord} from '../../core/src/contracts.js';
 import {abortable,throwIfAborted} from './control.js';
 import {documentRetrievalSchema,RetrievalFailure,type DocumentFragment,type DocumentRetrieval,type DocumentScope,type RetrievalEnvironment,type FragmentRef} from './retrieval-types.js';
 
-const ref=({text:_text,name:_name,...rest}:DocumentFragment):FragmentRef=>rest;
+const ref=({text:_text,searchText:_searchText,name:_name,...rest}:DocumentFragment):FragmentRef=>rest;
 export function retrievalCheck(env:RetrievalEnvironment){throwIfAborted(env.signal);if(env.isCurrent&&env.isCurrent()!==true)throw new RetrievalFailure('STALE_SELECTION');if(env.registry.turnId!==env.turnId)throw new RetrievalFailure('SEARCH_ERROR');}
 export async function budgetDocumentFragments(found:DocumentFragment[],all:DocumentFragment[],scope:DocumentScope[],selectedChars:number,whole:boolean,env:RetrievalEnvironment):Promise<DocumentRetrieval>{
  if(!Number.isSafeInteger(env.contextLength)||env.contextLength<4096)throw new RetrievalFailure('TOKENIZER_ERROR');

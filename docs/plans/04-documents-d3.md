@@ -42,20 +42,24 @@
 
 **Files:** packages/documents/src/retrieval-types.ts, scope.ts, chunks.ts, lexical.ts, retrieve.ts, budget.ts; packages/core/src/sources/registry.ts; tests/documents/retrieval.test.ts, retrieval-evaluation.test.ts; tests/fixtures/documents/retrieval.json.
 
-- [ ] RED: automaticSelectionFindsRelevantChunks, explicitScopeLimitsRetrieval, unknownSectionDoesNotBroadenSearch, citationsRemainInspectable, partialCoverageIsDisclosed, budgetOmissionIsNotNoEvidence; hashes/versions/empty/duplicates/cancellation/tokenizer failure/atomic registry.
-- [ ] GREEN: строгие схемы, bounded heading/chunk extraction, лексическое ранжирование только тела текста, scope fence, полный измеренный payload и атомарные SourceRecord. Универсальный threshold0.5 не использовать.
-- [ ] Размеченные 10 ответимых +5 неответимых, русские перефразировки, заголовок-ловушка, одинаковые имена, границы главы. Записать recall и false retrieval на этом наборе, не обещать универсальное семантическое качество.
-- [ ] Target tests +typecheck, commit.
+- [x] RED: automaticSelectionFindsRelevantChunks, explicitScopeLimitsRetrieval, unknownSectionDoesNotBroadenSearch, citationsRemainInspectable, partialCoverageIsDisclosed, budgetOmissionIsNotNoEvidence; hashes/versions/empty/duplicates/cancellation/tokenizer failure/atomic registry.
+- [x] GREEN: строгие схемы, bounded heading/chunk extraction, лексическое ранжирование только тела текста, scope fence, полный измеренный payload и атомарные SourceRecord. Универсальный threshold0.5 не использовать.
+- [x] Размеченные 10 ответимых +5 неответимых, русские перефразировки, заголовок-ловушка, одинаковые имена, границы главы. Записать recall и false retrieval на этом наборе, не обещать универсальное семантическое качество.
+- [x] Target tests +typecheck, commit.
 
 ## Task 2: владелец/API и экран проверки
 
 **Files:** packages/host/src/documents-search.ts, document-tokenizer.ts, document-workspaces.ts, routes/documents.ts; workspace-types.ts; features/documents/DocumentSearch.tsx, DocumentPreview.tsx, Documents.tsx, documents.css; tests/documents/search-api.test.ts; scripts/check-documents-panel.mjs.
 
-- [ ] RED→GREEN API: только выбранные ready-снимки/области, immutable result/citation, stale deselect/remove/retry; auth/strict schemas, aborted/non-cooperative tokenizer, недоступная модель; без вызовов генерации.
-- [ ] Форма вопроса, области по текстовым разделам, результат/причины/частичный охват/токенный бюджет на пустой истории. Источник открывает ровно сохранённый фрагмент. Результаты и диалог сбрасываются при смене выбора; новый запрос отменяет старый.
-- [ ] Edge synthetic: выбор, ограничение главой, no-match/budget/error/cancel, источник/plain text, stale response, 320px/200%/клавиатура; обзор/память/D2 регрессии. Commit.
+- [x] RED→GREEN API: только выбранные ready-снимки/области, immutable result/citation, stale deselect/remove/retry; auth/strict schemas, aborted/non-cooperative tokenizer, недоступная модель; без вызовов генерации.
+- [x] Форма вопроса, области по текстовым разделам, результат/причины/частичный охват/токенный бюджет на пустой истории. Источник открывает ровно сохранённый фрагмент. Результаты и диалог сбрасываются при смене выбора; новый запрос отменяет старый.
+- [x] Edge synthetic: выбор, ограничение главой, no-match/budget/error/cancel, источник/plain text, stale response, 320px/200%/клавиатура; обзор/память/D2 регрессии. Commit.
 
 ## Task 3: приёмка
 
-- [ ] Минимальная native проверка синтетических TXT/PDF через новый API и tokenizer текущей уже загруженной12B; loaded set и source hashes прежние, никаких predictions. Остальные ошибки — synthetic fixtures.
-- [ ] Полный Vitest, tsc/build; одно независимое ревью D3, один RED→GREEN проход Important/Critical +green suite, Minor записать. Обновить отчёт/guide/roadmap; commit/push. Остановиться перед D4.
+- [x] Минимальная native проверка синтетических TXT/PDF через новый API и tokenizer текущей уже загруженной12B; loaded set и source hashes прежние, никаких predictions. Остальные ошибки — synthetic fixtures.
+- [x] Полный Vitest, tsc/build; итоговая проверка D3 автором вместо независимого ревью (см. уточнение ниже), один RED→GREEN проход Important/Critical +green suite, Minor записать. Обновить отчёт/guide/roadmap; commit/push. Остановиться перед D4.
+
+## Уточнение формата приёмки после паузы
+
+Прямое ограничение пользователя на модель/режим субагентов имеет приоритет над требованием skill выбрать самого мощного ревьюера. Допустимость наследуемой модели подтвердить нельзя, поэтому прежний агент не возобновляется и новые не запускаются. Итоговая проверка выполняется автором; завершённого независимого ревью нет. Проверка и её исправления отражаются отдельно в отчёте. Это исключение из первоначального порядка, а не заявление о независимой проверке.

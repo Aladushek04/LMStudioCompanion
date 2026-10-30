@@ -13,7 +13,7 @@ export type DocumentSnapshot=z.infer<typeof snapshotSchema>;
 export interface DocumentSection {id:string;title:string;start:number;end:number;level:number}
 export interface ScopedDocument {snapshot:DocumentSnapshot;ranges:{start:number;end:number}[]}
 export interface FragmentRef {id:string;documentId:string;contentHash:string;version:string;start:number;end:number;score:number}
-export interface DocumentFragment extends FragmentRef {text:string;name:string}
+export interface DocumentFragment extends FragmentRef {text:string;searchText:string;name:string}
 export interface RetrievalCoverage {selectedChars:number;includedChars:number;totalChunks:number;foundChunks:number;includedChunks:number;omittedBudget:number;omittedLimit:number;partial:boolean}
 export interface DocumentRetrieval {
  searchId:string;turnId:string;state:'found'|'no-matches'|'budget-omitted'|'empty-scope';scope:DocumentScope[];
