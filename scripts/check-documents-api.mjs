@@ -1,6 +1,6 @@
 // D0 research only: fixed synthetic fixtures, no generation/model loading/chat history.
 import assert from 'node:assert/strict';
-import {readFile,writeFile,mkdir} from 'node:fs/promises';
+import {readFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
@@ -8,15 +8,16 @@ import {dirname,join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {LMStudioClient,ChatMessage,FileHandle} from '@lmstudio/sdk';
 import {probeError as short} from './documents-probe-error.mjs';
+import {persistProbeRun} from './documents-probe-output.mjs';
 
 const root=dirname(dirname(fileURLToPath(import.meta.url))),fixtures=join(root,'tests/fixtures/documents');
-const manifest=JSON.parse(await readFile(join(fixtures,'manifest.json'),'utf8'));
+let manifest;
 const silent={debug(){},info(){},warn(){},error(){},log(){}};
 const createClient=()=>new LMStudioClient({baseUrl:'ws://127.0.0.1:1234',logger:silent});
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const watchdog=setTimeout(()=>{console.error('D0 probe exceeded 60s; closing this probe process.');process.exit(2);},60000);
 async function bounded(promise,label){let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error(label+' exceeded 8s')),8000);})]);}finally{clearTimeout(timer);}}
-async function file(name){assert(manifest.synthetic&&manifest.files.some(f=>f.name===name));const bytes=await readFile(join(fixtures,name));assert(bytes.length<=65536);assert.equal(hash(bytes),manifest.files.find(f=>f.name===name).sha256);return bytes;}
+async function file(name){manifest??=JSON.parse(await readFile(join(fixtures,'manifest.json'),'utf8'));assert(manifest.synthetic&&manifest.files.some(f=>f.name===name));const bytes=await readFile(join(fixtures,name));assert(bytes.length<=65536);assert.equal(hash(bytes),manifest.files.find(f=>f.name===name).sha256);return bytes;}
 async function parse(client,handle,signal=AbortSignal.timeout(8000)){
  const parser=await bounded(client.files.getDocumentParsingLibrary(handle),'parser identification');
  if(parser.library!=='builtIn')return {state:'unverified-parser',parser};
@@ -31,6 +32,7 @@ if(process.argv[2]==='--lifecycle-child'){
 }else{
  assert.equal(process.argv.length,2,'Only the fixed fixture probe is supported');
  const client=createClient(),report={checkedAt:new Date().toISOString(),sdk:JSON.parse(await readFile(join(root,'node_modules/@lmstudio/sdk/package.json'),'utf8')).version,synthetic:true,generationCalled:false,modelLoadingCalled:false,limits:{fixedFixtureFiles:4,maxFixtureBytes:65536,operationDeadlineMs:8000,probeDeadlineMs:60000},documents:[]};
+ await persistProbeRun(join(root,'data/documents-d0-live.json'),report,async()=>{
  try{
   report.modelsBefore=await bounded(loaded(client),'loaded models');
   const handles=new Map();
@@ -69,7 +71,8 @@ if(process.argv[2]==='--lifecycle-child'){
   report.nativeChatIsolationAndStrictMode='unknown: SDK-only D0, no active chat modified';
   report.modelsAfter=await bounded(loaded(client),'loaded models after');assert.deepEqual(report.modelsAfter,report.modelsBefore);report.modelSetUnchanged=true;
   for(const {name}of manifest.files)await file(name);report.sourceBytesUnchanged=true;
-  await mkdir(join(root,'data'),{recursive:true});await writeFile(join(root,'data/documents-d0-live.json'),JSON.stringify(report,null,2)+'\n');
-  console.log(JSON.stringify(report));
  }finally{await client[Symbol.asyncDispose]();clearTimeout(watchdog);}
+ },['sameName','preAbortedParseRejected','inFlightParsePromiseRejected','invalidHandleRejectedBeforeUse','retrievalWithoutEmbedding','sdkMessage','afterCreatorProcessExit','modelsAfter','modelSetUnchanged','sourceBytesUnchanged']);
+ console.log(JSON.stringify(report));
+ if(report.outcome!=='complete')process.exitCode=1;
 }

@@ -8,7 +8,7 @@ describe('D0 diagnostics',()=>{
  });
  it('keeps expired-upload cause without printing server filesystem locations',()=>{
   const error=Error("ENOENT: no such file or directory, open 'C:\\Synthetic\\User\\.lmstudio\\user-files\\1234.txt'");
-  expect(probeError(error)).toBe('ENOENT: synthetic upload no longer exists.');
+  expect(probeError(error)).toBe('ENOENT: requested resource not found.');
  });
  it('removes path-bearing stack suffixes from other SDK failures',()=>{
   expect(probeError(Error('│ Unsupported parser │\n│ </> STACK TRACE │\n│ at file:///G:/Synthetic/Private/file.mjs │'))).toBe('Unsupported parser');

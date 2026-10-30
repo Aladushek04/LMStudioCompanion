@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-10-30T16:59:15.918Z",
+  "checkedAt": "2026-10-30T17:13:37.975Z",
   "sdk": "1.5.0",
   "synthetic": true,
   "generationCalled": false,
@@ -99,7 +99,7 @@
   "afterCreatorProcessExit": {
     "readable": false,
     "usesDeprecatedReconstruction": true,
-    "error": "ENOENT: synthetic upload no longer exists."
+    "error": "ENOENT: requested resource not found."
   },
   "afterLmStudioRestart": "unknown: LM Studio was not restarted",
   "nativeChatIsolationAndStrictMode": "unknown: SDK-only D0, no active chat modified",
@@ -156,17 +156,33 @@
     "strictModeReady": false
   },
   "tests": {
-    "passed": 173,
-    "files": 31,
+    "passed": 174,
+    "files": 32,
     "typecheck": true,
     "build": true,
     "diagnosticsRedToGreen": 3,
     "restrictedAttempt": {
       "failed": 29,
       "reason": "Sandbox denied test loopback connections (EACCES); permitted rerun passed without application changes"
-    }
+    },
+    "diagnosticsTests": 4,
+    "regressionsRedToGreen": [
+      "current incomplete probe replaces a stale success",
+      "ENOENT does not imply an expired upload"
+    ]
   },
   "review": {
-    "status": "pending final independent review"
-  }
+    "status": "one final independent review, one fix pass",
+    "initialImportant": 1,
+    "diagnosticMinorRegradedImportant": 1,
+    "importantFixed": 2,
+    "plannedStatusUpdatesCompleted": true,
+    "deferredMinor": [],
+    "unverifiedByDesign": [
+      "native integration and strict-mode require D4",
+      "successful retrieval, server CPU cancel, restart not tested",
+      "license notices need recheck before any future fork"
+    ]
+  },
+  "outcome": "complete"
 }
