@@ -8,7 +8,9 @@ export const refSchema=candidateSchema.pick({id:true,revision:true,reason:true})
 export const requestSchema=z.discriminatedUnion('action',[
  z.object({action:z.literal('recall'),query:z.string().max(4096)}).strict(),
  z.object({action:z.literal('usage'),grant:z.string().uuid(),refs:z.array(refSchema).max(5)}).strict(),
+ z.object({action:z.literal('capture'),text:z.string().max(4096),mode:z.enum(['explicit','suggest'])}).strict(),
 ]);
+export const captureReplySchema=z.object({state:z.enum(['pending','ignored','blocked','duplicate','unresolved','limit']),message:z.string().max(1000),proposalId:z.string().uuid().optional()}).strict();
 export const sign=(secret:string,text:string)=>createHmac('sha256',secret).update(text).digest('hex');
 export function matches(a:string,b:string):boolean{return /^[a-f0-9]{64}$/.test(a)&&/^[a-f0-9]{64}$/.test(b)&&timingSafeEqual(Buffer.from(a,'hex'),Buffer.from(b,'hex'));}
 // One bounded JSON frame at a time. Keep surplus bytes so fragmentation/coalescing is safe.

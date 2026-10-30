@@ -11,6 +11,7 @@ import {prepareMemoryDirectory} from '../../memory/src/local-directory.js';
 import {descriptorSchema,frames,sign,matches,requestSchema} from '../../memory/src/channel-protocol.js';
 import {rankMemories} from '../../memory/src/retrieval.js';
 import {UsageLog} from '../../memory/src/usage.js';
+import type {ProposalQueue} from '../../memory/src/proposals.js';
 const run=promisify(execFile);
 async function protect(directory:string){
  await prepareMemoryDirectory(directory);
@@ -19,7 +20,7 @@ async function protect(directory:string){
  const script="$ErrorActionPreference='Stop'; $sid=[System.Security.Principal.WindowsIdentity]::GetCurrent().User; $acl=[System.Security.AccessControl.DirectorySecurity]::new(); $acl.SetAccessRuleProtection($true,$false); $rule=[System.Security.AccessControl.FileSystemAccessRule]::new($sid,'FullControl','ContainerInherit,ObjectInherit','None','Allow'); $acl.AddAccessRule($rule); [System.IO.Directory]::SetAccessControl($env:COMPANION_LINK_DIRECTORY,$acl); $actual=[System.IO.Directory]::GetAccessControl($env:COMPANION_LINK_DIRECTORY); if(-not $actual.AreAccessRulesProtected){throw 'ACL not protected'}; foreach($r in $actual.GetAccessRules($true,$true,[System.Security.Principal.SecurityIdentifier])){if($r.IdentityReference.Translate([System.Security.Principal.SecurityIdentifier]).Value -ne $sid.Value){throw 'Unexpected ACL'}}";
  await run(shell,['-NoProfile','-NonInteractive','-Command',script],{windowsHide:true,timeout:5000,maxBuffer:1024,env:{...process.env,COMPANION_LINK_DIRECTORY:directory}});
 }
-export function createMemoryChannel(directory:string,get:()=>Promise<MemoryStore>){
+export function createMemoryChannel(directory:string,get:()=>Promise<MemoryStore>,proposals?:ProposalQueue){
  const file=join(directory,'connection.json'),marker=join(directory,'enabled.json');
  let server:Server|null=null,tail=Promise.resolve(),error='';const sockets=new Set<Socket>(),usage=new UsageLog();
  const grants=new Map<string,{at:number;records:Map<string,{revision:number;reason:string}>}>();
@@ -34,7 +35,9 @@ export function createMemoryChannel(directory:string,get:()=>Promise<MemoryStore
     io.write({nonce,proof:sign(secret,'server:'+hello.nonce+':'+nonce)});
     const envelope=z.object({request:requestSchema,proof:z.string()}).strict().parse(await io.read());
     if(!matches(envelope.proof,sign(secret,'client:'+nonce+':'+JSON.stringify(envelope.request))))throw Error('Authentication');
-    const request=envelope.request,store=await get();if(socket.destroyed)return;
+    const request=envelope.request;if(socket.destroyed)return;
+    if(request.action==='capture'){if(!proposals)throw Error('Capture unavailable');const value=await proposals.capture(request.text,request.mode);if(!socket.destroyed){io.write({ok:true,value});socket.end();}return;}
+    const store=await get();if(socket.destroyed)return;
     if(request.action==='recall'){
      const ranked=rankMemories(await store.listMemories({scope:'global'}),request.query).map(({id,revision,content,pinned,reason})=>({id,revision,content,pinned,reason}));
      let bytes=0;const records=ranked.filter(r=>{const size=Buffer.byteLength(JSON.stringify(r))+1;if(bytes+size>256000)return false;bytes+=size;return true;});

@@ -35,8 +35,10 @@ export class MemoryStore {
     return structuredClone([...this.records.values()].filter(r=>r.deletedAt===null&&(!f.scope||r.scope===f.scope)&&(!f.projectId||r.projectId===f.projectId)&&(!f.sessionId||r.sessionId===f.sessionId)&&(!f.query||r.content.toLocaleLowerCase('ru').includes(f.query.toLocaleLowerCase('ru')))));
   }
   async getMemory(id:string):Promise<MemoryRecord|null>{await this.tail;if(!this.accepting)throw new Error('Хранилище памяти закрыто.');const r=this.records.get(id);return r&&r.deletedAt===null?structuredClone(r):null;}
-  saveMemory(input:MemoryInput):Promise<OperationResult<MemoryRecord>>{
+  async readView():Promise<{revision:number;records:MemoryRecord[]}>{await this.tail;if(!this.accepting)throw new Error('Хранилище памяти закрыто.');return {revision:this.snapshot.revision,records:structuredClone([...this.records.values()].filter(r=>r.deletedAt===null))};}
+  saveMemory(input:MemoryInput,expectedStoreRevision?:number):Promise<OperationResult<MemoryRecord>>{
     return this.enqueue(async()=>{
+      if(expectedStoreRevision!==undefined&&this.snapshot.revision!==expectedStoreRevision)return failure('CONFLICT','Память изменилась после подготовки предложения. Обновите предложение и подтвердите заново.');
       const parsed=memoryInputSchema.safeParse(input);if(!parsed.success)return failure('INVALID_INPUT','Неверные поля записи памяти.');
       const now=Date.now();const checked=memoryRecordSchema.safeParse({...parsed.data,id:randomUUID(),createdAt:now,updatedAt:now,revision:1,manualPriority:true,deletedAt:null,lastAccessedAt:0,accessCount:0});
       if(!checked.success)return failure('INVALID_INPUT','Область памяти и её идентификаторы не согласованы.');

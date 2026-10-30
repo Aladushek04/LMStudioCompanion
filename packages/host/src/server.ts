@@ -56,7 +56,7 @@ export async function startManagementServer(settingsDir: string, signal: AbortSi
     const settings = new SettingsStore(settingsDir); await settings.readSettings();
     const assets = options.assets ?? await assetsFromBuild();
     const memory=createMemoryRoutes(join(settingsDir,'memory'),options.memoryOptions);
-    const memoryChannel=createMemoryChannel(join(settingsDir,'memory-channel'),memory.get);
+    const memoryChannel=createMemoryChannel(join(settingsDir,'memory-channel'),memory.get,memory.proposals);
     const token = randomBytes(32).toString('hex');
     const shutdown = new AbortController(); let report: CapabilityReport | null = null; let checking = false;
     const server = createServer(); server.requestTimeout = 10000; server.headersTimeout = 10000; server.timeout = 15000;
