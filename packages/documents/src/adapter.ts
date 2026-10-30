@@ -24,7 +24,11 @@ export function createDocumentAdapter(backend:DocumentBackend,overrides:Partial<
    try{const result=options.onState?.(structuredClone(state));if(result)void Promise.resolve(result).catch(()=>{warnings.push('Не удалось обновить отображение статуса.');});}
    catch{warnings.push('Не удалось обновить отображение статуса.');}
   };
-  const checkCurrent=(signal:AbortSignal)=>{throwIfAborted(signal);try{if(options.isCurrent&&!options.isCurrent())throw new DocumentFailure('STALE');}catch{throw new DocumentFailure('STALE');}};
+  const checkCurrent=(signal:AbortSignal)=>{
+   throwIfAborted(signal);
+   try{if(options.isCurrent){const current:unknown=options.isCurrent();if(current instanceof Promise)void current.catch(()=>{});if(current!==true)throw new DocumentFailure('STALE');}}
+   catch{throw new DocumentFailure('STALE');}
+  };
   const finishError=(state:DocumentState,error:DocumentFailure,unreadable=false)=>{state.state=error.code==='STALE'?'stale':unreadable?'unreadable':'error';state.code=error.code;state.reason=error.message;state.text=null;state.locators=[];state.version=null;state.textHash=null;notify(state);};
   try{
    for(let index=0;index<sources.length;index++){

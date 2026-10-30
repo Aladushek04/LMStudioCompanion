@@ -1,0 +1,160 @@
+{
+  "checkedAt": "2026-10-30T17:44:29.887Z",
+  "stage": "D1",
+  "synthetic": true,
+  "generationCalled": false,
+  "modelLoadingCalled": false,
+  "outcome": "complete",
+  "modelsBefore": {
+    "llm": [
+      "google/gemma-4-12b-qat"
+    ],
+    "embedding": []
+  },
+  "elapsedMs": 113,
+  "documents": [
+    {
+      "name": "harbor.txt",
+      "state": "ready",
+      "code": null,
+      "sourceBytes": 233,
+      "contentHash": "45b68bb876c9d32860d1d6f5e3031fd0f5983abe840cbfab49b3331eb34d423d",
+      "textChars": 132,
+      "textHash": "c4e2dec739ec25a3b806fc93c45c0a97c60d6f38bfc0bd185fb58d96c04ebaec",
+      "version": "0ab6fbb0d388d2347f4d758f89fd5cf21cd56d8abe12fb4b6d8d6f4dd1d99a65",
+      "parser": {
+        "library": "builtIn",
+        "version": "1"
+      },
+      "locators": [
+        {
+          "kind": "text-range",
+          "start": 0,
+          "end": 132,
+          "label": "harbor.txt · извлечённый текст"
+        }
+      ],
+      "retrieval": "not-prepared"
+    },
+    {
+      "name": "text.pdf",
+      "state": "ready",
+      "code": null,
+      "sourceBytes": 2133,
+      "contentHash": "00368e95b917b7e2ef4db7f98234dfaec99df35e90690dbf19806615ae949116",
+      "textChars": 159,
+      "textHash": "3fbadbdaa0c6acb4e264ac7b6f251f5ab883fce187a4fd736a2bb0b978db5c11",
+      "version": "30c4082c8db5d74a807365972663f99b68a141402d8f90e6082164cc27b0b0db",
+      "parser": {
+        "library": "builtIn",
+        "version": "1"
+      },
+      "locators": [
+        {
+          "kind": "text-range",
+          "start": 0,
+          "end": 159,
+          "label": "text.pdf · извлечённый текст"
+        }
+      ],
+      "retrieval": "not-prepared"
+    },
+    {
+      "name": "scan.pdf",
+      "state": "unreadable",
+      "code": "NO_TEXT",
+      "sourceBytes": 15734,
+      "contentHash": "9a3aaa5c01d4d53cc30be349f65283434f394064bcf7b885f0474042d69582e3",
+      "textChars": 0,
+      "textHash": null,
+      "version": null,
+      "parser": {
+        "library": "builtIn",
+        "version": "1"
+      },
+      "locators": [],
+      "retrieval": "not-prepared"
+    },
+    {
+      "name": "broken.pdf",
+      "state": "error",
+      "code": "PARSER_ERROR",
+      "sourceBytes": 35,
+      "contentHash": "9068a3727b283cb55c068a0926f8bac1d34b78d18708b6def52b7ba098334c33",
+      "textChars": 0,
+      "textHash": null,
+      "version": null,
+      "parser": null,
+      "locators": [],
+      "retrieval": "not-prepared"
+    },
+    {
+      "name": "encrypted.pdf",
+      "state": "error",
+      "code": "PARSER_ERROR",
+      "sourceBytes": 3259,
+      "contentHash": "373ea2a62bd9aaeaa360cfcbac0ad844a2260c3e6240916ea0b6fc80696cb8e2",
+      "textChars": 0,
+      "textHash": null,
+      "version": null,
+      "parser": null,
+      "locators": [],
+      "retrieval": "not-prepared"
+    }
+  ],
+  "eventCount": 10,
+  "preAbortedRejected": true,
+  "expectedTextMarkersFound": true,
+  "modelsAfter": {
+    "llm": [
+      "google/gemma-4-12b-qat"
+    ],
+    "embedding": []
+  },
+  "modelSetUnchanged": true,
+  "sourceBytesUnchanged": true,
+  "encryptedPdfPasswordNotProvidedToNativeParser": true,
+  "nativeChatTested": false,
+  "newRelease": false,
+  "lmStudioVersion": "0.4.27.0",
+  "sdkVersion": "1.5.0",
+  "tests": {
+    "passed": 205,
+    "files": 34,
+    "documentsTests": 35,
+    "typecheck": true,
+    "build": true,
+    "redToGreen": [
+      "missing adapter module -> pipeline tests",
+      "missing SDK backend -> SDK tests",
+      "async owner must not authorize",
+      "unsupported PDF encryption is not an API failure"
+    ]
+  },
+  "limits": {
+    "maxFiles": 5,
+    "maxFileBytes": 8388608,
+    "maxBatchBytes": 20971520,
+    "maxTextChars": 250000,
+    "perFileTimeoutMs": 30000,
+    "batchTimeoutMs": 90000
+  },
+  "scope": {
+    "stage": "D1",
+    "ui": false,
+    "http": false,
+    "chatIntegration": false,
+    "retrieval": false,
+    "modelGeneration": false,
+    "modelLoading": false,
+    "publicRelease": false
+  },
+  "unknown": [
+    "native backend CPU-stop/memory ceiling",
+    "safe native attachment-byte access and chat isolation in D4",
+    "retrieval and strict answer policy"
+  ],
+  "review": {
+    "status": "pending final independent review"
+  }
+}
