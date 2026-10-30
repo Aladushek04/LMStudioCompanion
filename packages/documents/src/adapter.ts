@@ -29,22 +29,25 @@ export function createDocumentAdapter(backend:DocumentBackend,overrides:Partial<
    try{if(options.isCurrent){const current:unknown=options.isCurrent();if(current instanceof Promise)void current.catch(()=>{});if(current!==true)throw new DocumentFailure('STALE');}}
    catch{throw new DocumentFailure('STALE');}
   };
+  const checkBatch=()=>{scope.check();checkCurrent(scope.signal);scope.check();};
   const finishError=(state:DocumentState,error:DocumentFailure,unreadable=false)=>{state.state=error.code==='STALE'?'stale':unreadable?'unreadable':'error';state.code=error.code;state.reason=error.message;state.text=null;state.locators=[];state.version=null;state.textHash=null;notify(state);};
   try{
    for(let index=0;index<sources.length;index++){
-    const source=sources[index]!,state=states[index]!;checkCurrent(scope.signal);notify(state);checkCurrent(scope.signal);
+    const source=sources[index]!,state=states[index]!;checkBatch();notify(state);checkBatch();
     try{validateContent(source,limits.maxTextChars);}catch(error){finishError(state,asDocumentFailure(error),true);continue;}
     const fileScope=deadline(scope.signal,limits.perFileTimeoutMs,true);
+    const checkFile=()=>{fileScope.check();checkBatch();fileScope.check();};
     try{
-     checkCurrent(fileScope.signal);
-     active=Promise.resolve().then(()=>{checkCurrent(fileScope.signal);return backend.parse({name:source.name,bytes:source.bytes,signal:fileScope.signal});});settled=false;
+     checkFile();
+     active=Promise.resolve().then(()=>{checkFile();return backend.parse({name:source.name,bytes:source.bytes,signal:fileScope.signal});});settled=false;
      active.then(()=>{settled=true;},()=>{settled=true;});
-     const raw=await abortable(active,fileScope.signal);checkCurrent(fileScope.signal);
+     const raw=await abortable(active,fileScope.signal);checkFile();
      const parsed=parsedTextSchema.safeParse(raw);if(!parsed.success)throw new DocumentFailure('INVALID_RESULT');
      if(parsed.data.parser.library!=='builtIn'||parsed.data.parser.version!=='1')throw new DocumentFailure('UNSUPPORTED_PARSER');
      const text=normalizeText(parsed.data.text,limits.maxTextChars);state.parser=parsed.data.parser;
      if(!text.trim()){finishError(state,new DocumentFailure('NO_TEXT'),true);continue;}
-     checkCurrent(fileScope.signal);state.state='ready';state.text=text;state.textHash=hash(text);state.version=textVersion(state.contentHash,state.parser,state.textHash);
+     const textHash=hash(text),version=textVersion(state.contentHash,state.parser,textHash);
+     checkFile();state.state='ready';state.text=text;state.textHash=textHash;state.version=version;
      state.locators=[{kind:'text-range',start:0,end:text.length,label:state.name+' · извлечённый текст'}];notify(state);
     }catch(error){
      const failure=asDocumentFailure(error,fileScope.signal);
@@ -52,7 +55,7 @@ export function createDocumentAdapter(backend:DocumentBackend,overrides:Partial<
      finishError(state,failure);
     }finally{fileScope.close();}
    }
-   checkCurrent(scope.signal);
+   checkBatch();
    if(states.some(state=>state.state!=='ready'))warnings.push('Не все документы прочитаны; причины указаны у файлов.');
    return {ok:true,value:structuredClone(states),warnings:[...new Set(warnings)]};
   }catch(error){

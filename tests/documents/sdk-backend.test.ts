@@ -1,5 +1,6 @@
 import {expect,it,vi} from 'vitest';
 import {FileHandle,type LMStudioClient} from '@lmstudio/sdk';
+import {performance} from 'node:perf_hooks';
 import {createSdkDocumentBackend} from '../../packages/documents/src/sdk-backend.js';
 import {createDocumentAdapter} from '../../packages/documents/src/adapter.js';
 import type {TurnContext} from '../../packages/core/src/contracts.js';
@@ -65,4 +66,15 @@ it('cancelled upload is fenced before any later parser RPC and remains BUSY unti
  await vi.waitFor(async()=>expect((await adapter.prepareDocuments([{name:input.name,bytes:input.bytes}],{...ctx,signal:new AbortController().signal})).ok).toBe(true));
  expect(files.getDocumentParsingLibrary).toHaveBeenCalledTimes(1);
  expect(files.parseDocument).toHaveBeenCalledTimes(1);
+});
+
+it.each([{perFileTimeoutMs:10,batchTimeoutMs:1000},{perFileTimeoutMs:1000,batchTimeoutMs:10}])('a late upload cannot start later SDK RPCs when timers are delayed: %j',async limits=>{
+ const {client,files,backend}=setup(),input=source();
+ files.prepareFileBase64.mockImplementationOnce(async()=>{
+  const end=performance.now()+35;while(performance.now()<end){/* Simulate synchronous SDK work. */}
+  return new FileHandle(client.files,'local:d1-test.txt','text/plain',input.bytes.length,input.name);
+ });
+ const ctx:TurnContext={turnId:'d1-sdk-deadline',chatScopeId:null,projectId:null,sessionId:null,mode:'auto',signal:input.signal};
+ expect(await createDocumentAdapter(backend,limits).prepareDocuments([{name:input.name,bytes:input.bytes}],ctx)).toMatchObject({ok:false,code:'TIMEOUT'});
+ expect(files.getDocumentParsingLibrary).not.toHaveBeenCalled();expect(files.parseDocument).not.toHaveBeenCalled();
 });

@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-10-30T17:44:29.887Z",
+  "checkedAt": "2026-10-30T18:01:54.693Z",
   "stage": "D1",
   "synthetic": true,
   "generationCalled": false,
@@ -11,7 +11,7 @@
     ],
     "embedding": []
   },
-  "elapsedMs": 113,
+  "elapsedMs": 99,
   "documents": [
     {
       "name": "harbor.txt",
@@ -119,9 +119,9 @@
   "lmStudioVersion": "0.4.27.0",
   "sdkVersion": "1.5.0",
   "tests": {
-    "passed": 205,
+    "passed": 212,
     "files": 34,
-    "documentsTests": 35,
+    "documentsTests": 42,
     "typecheck": true,
     "build": true,
     "redToGreen": [
@@ -129,7 +129,8 @@
       "missing SDK backend -> SDK tests",
       "async owner must not authorize",
       "unsupported PDF encryption is not an API failure"
-    ]
+    ],
+    "reviewRegressionCasesRedToGreen": 7
   },
   "limits": {
     "maxFiles": 5,
@@ -155,6 +156,20 @@
     "retrieval and strict answer policy"
   ],
   "review": {
-    "status": "pending final independent review"
+    "status": "one independent final review, one fix pass",
+    "critical": 0,
+    "importantFound": 2,
+    "importantFixed": 2,
+    "regressions": [
+      "intrinsic typed-array size/copy without overridden iterator",
+      "monotonic file/batch deadline despite delayed timer",
+      "no SDK RPC after late upload"
+    ],
+    "deferredMinor": [
+      "Late asynchronous onState failures cannot appear in already returned warnings; separate delivery is deferred"
+    ],
+    "nativeLiveRepeatedByReviewer": false,
+    "visualFixtureReviewByReviewer": false,
+    "plannedStatusUpdatesComplete": true
   }
 }

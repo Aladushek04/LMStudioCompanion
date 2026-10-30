@@ -4,15 +4,28 @@ import {DocumentFailure} from './errors.js';
 import type {DocumentLimits,ParserIdentity} from './types.js';
 
 const selectedSchema=z.object({name:z.string().trim().min(1).max(200).refine(name=>!/[\\/:\x00-\x1f\x7f]/.test(name)&&name!=='.'&&name!=='..'),bytes:z.instanceof(Uint8Array)}).strict();
+const typedArrayPrototype=Object.getPrototypeOf(Uint8Array.prototype);
+const byteLengthGetter=Object.getOwnPropertyDescriptor(typedArrayPrototype,'byteLength')!.get!;
+const byteOffsetGetter=Object.getOwnPropertyDescriptor(typedArrayPrototype,'byteOffset')!.get!;
+const bufferGetter=Object.getOwnPropertyDescriptor(typedArrayPrototype,'buffer')!.get!;
+function actualView(bytes:Uint8Array){
+ try{return {length:byteLengthGetter.call(bytes) as number,offset:byteOffsetGetter.call(bytes) as number,buffer:bufferGetter.call(bytes) as ArrayBufferLike};}
+ catch{throw new DocumentFailure('INVALID_INPUT');}
+}
 export type SelectedSnapshot={name:string;bytes:Uint8Array;kind:'txt'|'pdf'|'unsupported';contentHash:string};
 export const hash=(data:Uint8Array|string)=>createHash('sha256').update(data).digest('hex');
 export function selectedSnapshots(inputs:unknown[],limits:DocumentLimits):SelectedSnapshot[]{
  if(!Array.isArray(inputs)||!inputs.length)throw new DocumentFailure('INVALID_INPUT');
  if(inputs.length>limits.maxFiles)throw new DocumentFailure('LIMIT_EXCEEDED');
  const parsed=selectedSchema.array().safeParse(inputs);if(!parsed.success)throw new DocumentFailure('INVALID_INPUT');
- if(parsed.data.some(f=>f.bytes.byteLength>limits.maxFileBytes)||parsed.data.reduce((sum,f)=>sum+f.bytes.byteLength,0)>limits.maxBatchBytes)throw new DocumentFailure('LIMIT_EXCEEDED');
- return parsed.data.map(input=>{
-  const bytes=Uint8Array.from(input.bytes),name=input.name.normalize('NFC'),extension=name.toLowerCase().split('.').at(-1);
+ const views=parsed.data.map(input=>actualView(input.bytes));
+ if(views.some(view=>view.length>limits.maxFileBytes)||views.reduce((sum,view)=>sum+view.length,0)>limits.maxBatchBytes)throw new DocumentFailure('LIMIT_EXCEEDED');
+ let copies:Uint8Array[];
+ try{copies=views.map(view=>new Uint8Array(new Uint8Array(view.buffer,view.offset,view.length)));}
+ catch{throw new DocumentFailure('INVALID_INPUT');}
+ if(copies.some(copy=>copy.byteLength>limits.maxFileBytes)||copies.reduce((sum,copy)=>sum+copy.byteLength,0)>limits.maxBatchBytes)throw new DocumentFailure('LIMIT_EXCEEDED');
+ return parsed.data.map((input,index)=>{
+  const bytes=copies[index]!,name=input.name.normalize('NFC'),extension=name.toLowerCase().split('.').at(-1);
   return {name,bytes,kind:extension==='txt'?'txt':extension==='pdf'?'pdf':'unsupported',contentHash:hash(bytes)};
  });
 }

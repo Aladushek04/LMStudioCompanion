@@ -1,5 +1,6 @@
 import {afterEach,expect,it,vi} from 'vitest';
 import {createHash} from 'node:crypto';
+import {performance} from 'node:perf_hooks';
 import {createDocumentAdapter} from '../../packages/documents/src/adapter.js';
 import type {DocumentBackend,DocumentState} from '../../packages/documents/src/types.js';
 import type {OperationResult,TurnContext} from '../../packages/core/src/contracts.js';
@@ -85,6 +86,26 @@ it('selected bytes are copied before progress callbacks or caller mutations',asy
  expect(doc!.text).toBe('original');expect(b.parse).toHaveBeenCalledTimes(1);
 });
 
+it('copies actual typed-array bytes without invoking a custom iterator or expanding either byte ceiling',async()=>{
+ let iterations=0;
+ const sources=[new Uint8Array([65]),new Uint8Array([66])].map(content=>{
+  Object.defineProperty(content,Symbol.iterator,{value:function*(){iterations++;yield* bytes('expanded');}});
+  return {name:'copy.txt',bytes:content};
+ });
+ const a=createDocumentAdapter(backend(),{maxFileBytes:1,maxBatchBytes:2});
+ const docs=value(await a.prepareDocuments(sources,ctx()));
+ expect(docs.map(doc=>doc.text)).toEqual(['A','B']);
+ expect(docs.map(doc=>doc.sizeBytes)).toEqual([1,1]);expect(iterations).toBe(0);
+});
+
+it.each(['file','batch'])('intrinsic byte lengths enforce the %s ceiling even when a property is shadowed',async limit=>{
+ const content=new Uint8Array([65,66]);Object.defineProperty(content,'byteLength',{value:1});
+ const b=backend(),a=createDocumentAdapter(b,{maxFileBytes:limit==='file'?1:2,maxBatchBytes:limit==='file'?10:3});
+ const sources=Array.from({length:limit==='file'?1:2},()=>({name:'hidden.txt',bytes:content}));
+ expect(await a.prepareDocuments(sources,ctx())).toMatchObject({ok:false,code:'LIMIT_EXCEEDED'});
+ expect(b.parse).not.toHaveBeenCalled();
+});
+
 it('invalid/oversized parser responses are errors, not ready or silently truncated',async()=>{
  for(const result of [{content:'x'},parsed('x'.repeat(250001)),{text:'x',parser:{library:'unknown',version:'1'}}]){
   const a=createDocumentAdapter({parse:async()=>result});
@@ -126,6 +147,17 @@ it('batch deadline includes sequential parsing of multiple files',async()=>{
  const reading=createDocumentAdapter(b).prepareDocuments(Array.from({length:5},()=>input()),ctx());
  await vi.advanceTimersByTimeAsync(90000);expect(await reading).toMatchObject({ok:false,code:'TIMEOUT'});
  await vi.advanceTimersByTimeAsync(20000);expect(b.parse).toHaveBeenCalledTimes(5);
+});
+
+it.each([{perFileTimeoutMs:1,batchTimeoutMs:10000},{perFileTimeoutMs:10000,batchTimeoutMs:1}])('a delayed timer cannot authorize a late ready or next file: %j',async limits=>{
+ const states:DocumentState[]=[],b={parse:vi.fn(async()=>{
+  const end=performance.now()+25;while(performance.now()<end){/* Simulate a blocked event loop. */}
+  return parsed('late result');
+ })};
+ const result=await createDocumentAdapter(b,limits).prepareDocuments([input(),input()],ctx(),{onState:s=>{states.push(s);}});
+ expect(result).toMatchObject({ok:false,code:'TIMEOUT'});
+ expect(states.some(state=>state.state==='ready')).toBe(false);
+ expect(b.parse.mock.calls.length).toBeLessThanOrEqual(1);
 });
 
 it('stale owner fence rejects late results rather than publishing them for a new selection',async()=>{

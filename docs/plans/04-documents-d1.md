@@ -24,22 +24,24 @@
 
 **Files:** packages/documents/src/types.ts, errors.ts, control.ts, text.ts, adapter.ts; tests/documents/attachments.test.ts; tsconfig.json, tsconfig.build.json при необходимости.
 
-- [ ] RED: готовый TXT/PDF имеет source/text hash и стабильную content version, одинаковое имя не смешивает bytes; scan пустой → unreadable; unknown/malformed response не ready; ссылки не выдумывают страницу; retrieval не ready.
-- [ ] RED: строгий вход без path, caps 5/8MiB/20MiB, снимок bytes не меняется вместе с внешним Buffer; UTF-8 BOM/CRLF, invalid UTF-8/NUL, empty, unsupported extension, плохая PDF signature и >250000 text не читаются успешно.
-- [ ] RED: отмена до/во время и поздний результат, file/batch timeout, owner stale, BUSY до завершения зависшего backend; причины не раскрывают SDK stack/пути и не угадывают причину защиты PDF.
-- [ ] GREEN: реализовать минимальный последовательный pipeline, схемы и внутренние guards; прогнать attachments.test.ts и typecheck. Commit checkpoint.
+- [x] RED: готовый TXT/PDF имеет source/text hash и стабильную content version, одинаковое имя не смешивает bytes; scan пустой → unreadable; unknown/malformed response не ready; ссылки не выдумывают страницу; retrieval не ready.
+- [x] RED: строгий вход без path, caps 5/8MiB/20MiB, снимок bytes не меняется вместе с внешним Buffer; UTF-8 BOM/CRLF, invalid UTF-8/NUL, empty, unsupported extension, плохая PDF signature и >250000 text не читаются успешно.
+- [x] RED: отмена до/во время и поздний результат, file/batch timeout, owner stale, BUSY до завершения зависшего backend; причины не раскрывают SDK stack/пути и не угадывают причину защиты PDF.
+- [x] GREEN: реализовать минимальный последовательный pipeline, схемы и внутренние guards; прогнать attachments.test.ts и typecheck. Commit checkpoint.
 
 ## Task 2: проверенный SDK backend и live-проверка
 
 **Files:** packages/documents/src/sdk-backend.ts; tests/documents/sdk-backend.test.ts; scripts/check-documents-adapter.mjs.
 
-- [ ] RED: отсутствующий API, fake/foreign FileHandle, несовпавшие name/size/type, неизвестный parser, некорректный result, ошибка parser и отменённый upload не запускают дальнейший разбор. Нет embedding/model методов.
-- [ ] GREEN: prepareFileBase64 → getDocumentParsingLibrary → parseDocument с проверенным parserId и signal; проверять abort между await, скрывать сырые ошибки. Общий caller обязан закрыть свой отдельный SDK client после обработки; backend не закрывает чужой/общий клиент.
-- [ ] Проверить реальный адаптер на существующих synthetic TXT, PDF, scan, broken PDF. Только file API; loaded set до/после одинаков; никаких LLM/embedding, смены настроек/плагинов или перезапуска LM Studio.
-- [ ] Full suite, typecheck/build; checkpoint commit. Не запускать повторно тяжёлые live-тесты без причины.
+- [x] RED: отсутствующий API, fake/foreign FileHandle, несовпавшие name/size/type, неизвестный parser, некорректный result, ошибка parser и отменённый upload не запускают дальнейший разбор. Нет embedding/model методов.
+- [x] GREEN: prepareFileBase64 → getDocumentParsingLibrary → parseDocument с проверенным parserId и signal; проверять abort между await, скрывать сырые ошибки. Общий caller обязан закрыть свой отдельный SDK client после обработки; backend не закрывает чужой/общий клиент.
+- [x] Проверить реальный адаптер на существующих synthetic TXT, PDF, scan, broken PDF. Только file API; loaded set до/после одинаков; никаких LLM/embedding, смены настроек/плагинов или перезапуска LM Studio.
+- [x] Full suite, typecheck/build; checkpoint commit. Не запускать повторно тяжёлые live-тесты без причины.
 
 ## Task 3: приёмка D1
 
-- [ ] Одно итоговое независимое ревью всего D1; существенные замечания — один RED→GREEN fix pass и полный green suite. Неподтверждённые backend/resource гарантии не отмечать готовыми.
-- [ ] docs/research/documents-d1-check.md, reference/documents-d1-check.json: команды/результаты, schema/API choices, limits, unknown backend CPU-stop, lifecycle и границы D2/D4. Обновить статусы и commit/push текущей ветки.
-- [ ] Остановка перед D2. Не менять ZIP/tag/release 0.1.5; публичный выпуск только после полного D.
+- [x] Одно итоговое независимое ревью всего D1; существенные замечания — один RED→GREEN fix pass и полный green suite. Неподтверждённые backend/resource гарантии не отмечать готовыми.
+- [x] docs/research/documents-d1-check.md, reference/documents-d1-check.json: команды/результаты, schema/API choices, limits, unknown backend CPU-stop, lifecycle и границы D2/D4. Обновить статусы и commit/push текущей ветки.
+- [x] Остановка перед D2. Не менять ZIP/tag/release 0.1.5; публичный выпуск только после полного D.
+
+Результат: [отчёт D1](../research/documents-d1-check.md); 212 тестов / 34 файла, typecheck/build, одно ревью, один проход исправлений. Отложена только доставка поздних async onState ошибок; D2 не начат, релиз не выпускался.
