@@ -30,11 +30,16 @@ export function Documents({token}:{token:string}){
   if(!id){if(active.current)setInitialized(true);return;}
   if(!current.current&&lease.current?.id!==id&&!await claim(id)){reset();setNotice('Для этой вкладки открыт отдельный пустой набор.');return;}
   try{const next=await request<DocumentWorkspace>(token,'/api/documents/'+id,'GET',lifetime.current.signal);if(seq===generation.current){apply(next);if(active.current)setInitialized(true);}}
-  catch(e){if(e instanceof ApiError&&e.status===404){reset();if(active.current)setNotice('Прежний рабочий набор завершён. Добавьте нужные файлы заново.');}else throw e;}
+  catch(e){if(!active.current||seq!==generation.current||(current.current&&current.current.id!==id))return;if(e instanceof ApiError&&e.status===404){reset();setNotice('Прежний рабочий набор завершён. Добавьте нужные файлы заново.');}else throw e;}
  }
  function failure(e:unknown){if(active.current)setError(e instanceof ApiError?e.message:'Связь с локальным сервисом прервана. Обновите список перед повтором.');}
  useEffect(()=>{
-  active.current=true;operation.current=true;void refresh().catch(failure).finally(()=>{operation.current=false;});
+  active.current=true;operation.current=true;
+  // A fresh navigation may inherit another tab's sessionStorage. Only reload/history
+  // restoration can resume its ID; a copied new navigation starts with an empty set.
+  const navigation=performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming|undefined;
+  if(navigation?.type==='navigate')sessionStorage.removeItem(storageKey);
+  void refresh().catch(failure).finally(()=>{operation.current=false;});
   const timer=setInterval(()=>{if(!operation.current&&document.visibilityState==='visible')void refresh().catch(failure);},1000);
   return()=>{active.current=false;clearInterval(timer);lease.current?.release();lifetime.current.abort();upload.current?.abort();};
  },[]);

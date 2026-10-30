@@ -30,12 +30,21 @@ try{
  const payload='<img src=x onerror="window.D2_XSS=1">';await input.setInputFiles({name:'a'.repeat(185)+'.txt',mimeType:'text/plain',buffer:Buffer.from(payload)});await a.getByRole('button',{name:'Добавить файлы',exact:true}).click();const long=card('a'.repeat(185)+'.txt');await long.getByText('Готов',{exact:true}).waitFor();await long.getByRole('button',{name:'Посмотреть текст',exact:true}).click();await dialog.getByText(payload,{exact:true}).waitFor();assert.equal(await dialog.locator('img').count(),0);assert.equal(await a.evaluate(()=>window.D2_XSS),undefined);await a.keyboard.press('Escape');
  await a.screenshot({path:join(artifact,'documents-desktop.png'),fullPage:true});
  await a.getByRole('button',{name:'Обзор',exact:true}).click();await a.getByRole('button',{name:'Документы',exact:true}).click();assert.equal(await a.getByRole('article').count(),5);
- await a.reload();await a.getByRole('button',{name:'Документы',exact:true}).click();await card('harbor.txt').waitFor();assert.equal(await a.getByRole('article').count(),5);
+ await a.reload();
+ const [reloadClone]=await Promise.all([a.waitForEvent('popup'),a.evaluate(()=>{window.open(location.href);})]);reloadClone.on('pageerror',e=>errors.push(e.message));await reloadClone.getByRole('button',{name:'Документы',exact:true}).click();await reloadClone.getByText('Файлов пока нет.',{exact:true}).waitFor({timeout:3000});await reloadClone.close();
+ await a.getByRole('button',{name:'Документы',exact:true}).click();await card('harbor.txt').waitFor();assert.equal(await a.getByRole('article').count(),5);
  await a.setViewportSize({width:320,height:900});assert.equal(await a.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);await a.screenshot({path:join(artifact,'documents-mobile.png'),fullPage:true});
  await a.evaluate(()=>{document.documentElement.style.fontSize='200%';});assert.equal(await a.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
  const checkbox=card('harbor.txt').getByRole('checkbox');await checkbox.focus();await a.keyboard.press('Space');await assertChecked(checkbox);await a.keyboard.press('Tab');assert.notEqual(await a.evaluate(()=>document.activeElement?.tagName),'BODY');
  await card('harbor.txt').getByRole('button',{name:'Посмотреть текст',exact:true}).click();await dialog.waitFor();assert.equal(await a.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);await a.keyboard.press('Escape');
+ const oldId=await a.evaluate(()=>sessionStorage.getItem('companion-document-workspace'));let unblock,blockedOnce=false,markBlocked;const blocked=new Promise(r=>{markBlocked=r;});
+ await a.route(host.origin+'/api/documents/'+oldId,async route=>{if(route.request().method()==='GET'&&!blockedOnce){blockedOnce=true;markBlocked();await new Promise(r=>{unblock=r;});}await route.continue();});
+ await blocked;
  await a.getByRole('button',{name:'Очистить список',exact:true}).click();await a.getByText('Файлов пока нет.',{exact:true}).waitFor();assert.equal(await a.getByRole('article').count(),0);assert.equal(await a.evaluate(()=>sessionStorage.getItem('companion-document-workspace')),null);
- assert(closed>=6);assert.deepEqual(errors,[]);console.log('PASS D2 synthetic UI: TXT/PDF/scan/error/retry/cancel/selection/tab isolation/reload/escaping/keyboard/320px/200%; pageerror=0');
+ await input.setInputFiles({name:'current.txt',mimeType:'text/plain',buffer:Buffer.from('Current workspace')});await a.getByRole('button',{name:'Добавить файлы',exact:true}).click();await card('current.txt').getByText('Готов',{exact:true}).waitFor();const newId=await a.evaluate(()=>sessionStorage.getItem('companion-document-workspace'));
+ const obsolete=a.waitForResponse(r=>r.url()===host.origin+'/api/documents/'+oldId&&r.status()===404);unblock();await (await obsolete).finished();await a.waitForTimeout(100);
+ assert.equal(await a.evaluate(()=>sessionStorage.getItem('companion-document-workspace')),newId);assert.equal(await card('current.txt').count(),1);
+ await a.getByRole('button',{name:'Очистить список',exact:true}).click();await a.getByText('Файлов пока нет.',{exact:true}).waitFor();
+ assert(closed>=6);assert.deepEqual(errors,[]);console.log('PASS D2 synthetic UI: TXT/PDF/scan/error/retry/cancel/selection/tab isolation/reload/copied overview/stale404/escaping/keyboard/320px/200%; pageerror=0');
 }finally{await browser?.close();await host.close();await rm(directory,{recursive:true,force:true});}
 async function assertChecked(locator,checked=true){for(let i=0;i<20;i++){if(await locator.isChecked()===checked)return;await new Promise(r=>setTimeout(r,50));}assert.fail('Checkbox did not update');}

@@ -17,7 +17,6 @@ const labels: Record<string, string> = { sdkSurface: 'Интерфейсы ус�
 export function App() {
   const [token] = useState(getSessionToken); const [selected, setSelected] = useState('Обзор');
   const [memoryOpened,setMemoryOpened]=useState(false);
-  const [documentsOpened,setDocumentsOpened]=useState(false);
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null); const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState(''); const [error, setError] = useState('');
   const controller = useRef<AbortController | null>(null); const sectionHeading = useRef<HTMLHeadingElement | null>(null);
@@ -31,7 +30,7 @@ export function App() {
   useEffect(() => { void diagnose(); return () => controller.current?.abort(); }, []);
   const report = snapshot?.report; const connected = report?.features.connection?.state === 'verified';
   const time = report ? new Date(report.checkedAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : 'ещё не проверялось';
-  function navigate(name: string) { if(name==='Память')setMemoryOpened(true);if(name==='Документы')setDocumentsOpened(true);setSelected(name); requestAnimationFrame(() => sectionHeading.current?.focus()); }
+  function navigate(name: string) { if(name==='Память')setMemoryOpened(true);setSelected(name); requestAnimationFrame(() => sectionHeading.current?.focus()); }
   return <div className="app-shell">
     <a className="skip-link" href="#main">К содержимому</a>
     <aside className="sidebar">
@@ -59,7 +58,7 @@ export function App() {
           <section className="details-panel"><details><summary>Подробности проверки<span>Версии и подтверждения</span></summary><dl>{Object.entries(labels).map(([key, label]) => <div key={key}><dt>{label}</dt><dd><span className={'check-state ' + (report?.features[key]?.state === 'verified' ? 'verified' : '')}>{report?.features[key]?.state === 'verified' ? 'Подтверждено' : report?.features[key]?.state === 'unsupported' ? 'Не поддерживается' : 'Не проверено'}</span><p>{report?.features[key]?.evidence ?? 'Сначала выполните проверку подключения.'}</p></dd></div>)}</dl></details></section>
         </> : selected === 'Память' || selected === 'Документы' ? null : <section className="future-panel"><div className="large-icon" aria-hidden="true">{sections.find(s => s.name === selected)?.icon}</div><span className="module-badge">В разработке</span><h2>{future[selected]?.title}</h2><p>{future[selected]?.description}</p><div className="notice">{future[selected]?.reason}</div><p>{future[selected]?.next}</p><button className="secondary" onClick={() => navigate('Обзор')}>Вернуться к обзору</button></section>}
         {memoryOpened&&token&&<div hidden={selected!=='Память'}><Memory token={token}/></div>}
-        {documentsOpened&&token&&<div hidden={selected!=='Документы'}><Documents token={token}/></div>}
+        {token&&<div hidden={selected!=='Документы'}><Documents token={token}/></div>}
         <footer className="page-footer"><span>Панель управляет памятью и временными наборами документов. Настройки модели и чаты остаются в LM Studio.</span><span>Companion · 0.1</span></footer>
       </main>
     </div>

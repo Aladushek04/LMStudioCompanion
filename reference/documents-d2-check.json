@@ -38,5 +38,32 @@
     "embedding": []
   },
   "modelSetUnchanged": true,
-  "acceptance": "implementation-verified-review-pending"
+  "acceptance": "complete",
+  "validation": {
+    "vitestPassed": 223,
+    "vitestFiles": 36,
+    "typecheck": "passed",
+    "build": "passed",
+    "edge": [
+      "documents including reload-copy and stale404",
+      "overview",
+      "memory"
+    ],
+    "pageErrors": 0,
+    "review": {
+      "base": "90b5f52e7af0dfd150561c74fbb89ca648877b61",
+      "head": "2da315eab7bb17569ef021913000fc3cd176ba88",
+      "critical": 0,
+      "important": 2,
+      "fixedRedGreen": [
+        "copied tab after reload on overview",
+        "stale polling 404 after clear and upload"
+      ],
+      "repeatReview": false,
+      "declinedToJudge": [],
+      "deferredMinor": [
+        "stale queued job objects after repeated retry/cancel until raw settles"
+      ]
+    }
+  }
 }
