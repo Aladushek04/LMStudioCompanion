@@ -1,0 +1,188 @@
+{
+  "checkedAt": "2026-10-30T17:13:37.975Z",
+  "sdk": "1.5.0",
+  "synthetic": true,
+  "generationCalled": false,
+  "modelLoadingCalled": false,
+  "limits": {
+    "fixedFixtureFiles": 4,
+    "maxFixtureBytes": 65536,
+    "operationDeadlineMs": 8000,
+    "probeDeadlineMs": 60000
+  },
+  "documents": [
+    {
+      "name": "harbor.txt",
+      "bytes": 233,
+      "contentHash": "45b68bb876c9d32860d1d6f5e3031fd0f5983abe840cbfab49b3331eb34d423d",
+      "fileType": "text/plain",
+      "state": "text",
+      "parser": {
+        "library": "builtIn",
+        "version": "1"
+      },
+      "keys": [
+        "content",
+        "parser"
+      ],
+      "chars": 135,
+      "expectedMarker": true
+    },
+    {
+      "name": "text.pdf",
+      "bytes": 2133,
+      "contentHash": "00368e95b917b7e2ef4db7f98234dfaec99df35e90690dbf19806615ae949116",
+      "fileType": "application/pdf",
+      "state": "text",
+      "parser": {
+        "library": "builtIn",
+        "version": "1"
+      },
+      "keys": [
+        "content",
+        "parser"
+      ],
+      "chars": 163,
+      "expectedMarkers": true
+    },
+    {
+      "name": "scan.pdf",
+      "bytes": 15734,
+      "contentHash": "9a3aaa5c01d4d53cc30be349f65283434f394064bcf7b885f0474042d69582e3",
+      "fileType": "application/pdf",
+      "state": "empty",
+      "parser": {
+        "library": "builtIn",
+        "version": "1"
+      },
+      "keys": [
+        "content",
+        "parser"
+      ],
+      "chars": 1,
+      "emptyWithoutOcr": true
+    },
+    {
+      "name": "broken.pdf",
+      "bytes": 35,
+      "contentHash": "9068a3727b283cb55c068a0926f8bac1d34b78d18708b6def52b7ba098334c33",
+      "fileType": "application/pdf",
+      "state": "error",
+      "error": "Failed to load PDF file."
+    }
+  ],
+  "modelsBefore": {
+    "llm": [
+      "google/gemma-4-12b-qat"
+    ],
+    "embedding": []
+  },
+  "sameName": {
+    "namesEqual": true,
+    "handlesDiffer": true,
+    "contentDiffers": true
+  },
+  "preAbortedParseRejected": true,
+  "inFlightParsePromiseRejected": true,
+  "serverWorkStoppedByAbort": "unknown",
+  "invalidHandleRejectedBeforeUse": true,
+  "retrievalWithoutEmbedding": {
+    "state": "unsupported",
+    "reason": "Embedding model currently is required.",
+    "generationOrLoadAttempted": false
+  },
+  "sdkMessage": {
+    "filesPreserved": true,
+    "imageCount": 1,
+    "documentCount": 1
+  },
+  "afterCreatorProcessExit": {
+    "readable": false,
+    "usesDeprecatedReconstruction": true,
+    "error": "ENOENT: requested resource not found."
+  },
+  "afterLmStudioRestart": "unknown: LM Studio was not restarted",
+  "nativeChatIsolationAndStrictMode": "unknown: SDK-only D0, no active chat modified",
+  "modelsAfter": {
+    "llm": [
+      "google/gemma-4-12b-qat"
+    ],
+    "embedding": []
+  },
+  "modelSetUnchanged": true,
+  "sourceBytesUnchanged": true,
+  "lmStudioVersion": "0.4.27.0",
+  "installedRag": {
+    "packageVersion": "1.0.0",
+    "revision": 8,
+    "declaredLicense": "ISC",
+    "licenseFilePresent": false,
+    "declaredSdk": "1.4.0",
+    "actualInstalledSdk": "2.0.0",
+    "sourceHashes": {
+      "package.json": "8f35fa910b7c4d4ab7d9fb07c9bcbf6ba841147f086ada4416c6f1b83be20c1c",
+      "manifest.json": "9d404a73a509fe32e0e3cdf2397a40093e9a2273a8c345885aceb34e79ea8065",
+      "src/index.ts": "afba2d7bd038697b220e0646fa0d5a895656316f77add689d4872deb4b5ca623",
+      "src/config.ts": "8143ab191f0dd94190915ee2f86d3445202ccf22183e03438dd437d1d0ad0e79",
+      "src/promptPreprocessor.ts": "08aaaddae1772be68d05be98f7a71e06ed6f4308df64f72d932d1d610f35c472"
+    }
+  },
+  "independentFixtures": {
+    "textPages": 2,
+    "textMarkers": [
+      "MINT-482",
+      "ORBIT-936"
+    ],
+    "scanPages": 1,
+    "scanTextChars": 0,
+    "scanImages": 1,
+    "threeRenderedPagesVisuallyReviewed": true
+  },
+  "scope": {
+    "stage": "D0",
+    "productAdapterImplemented": false,
+    "chatSettingsChanged": false,
+    "thirdPartyPluginsModified": false,
+    "personalFilesRead": false,
+    "publishedRelease": false,
+    "restartNotPerformed": true
+  },
+  "decisions": {
+    "ownSdkAdapter": true,
+    "ragSourceCopied": false,
+    "defaultEmbeddingLoading": false,
+    "persistentTemporaryHandles": false,
+    "nativePageLocatorsAvailable": false,
+    "strictModeReady": false
+  },
+  "tests": {
+    "passed": 174,
+    "files": 32,
+    "typecheck": true,
+    "build": true,
+    "diagnosticsRedToGreen": 3,
+    "restrictedAttempt": {
+      "failed": 29,
+      "reason": "Sandbox denied test loopback connections (EACCES); permitted rerun passed without application changes"
+    },
+    "diagnosticsTests": 4,
+    "regressionsRedToGreen": [
+      "current incomplete probe replaces a stale success",
+      "ENOENT does not imply an expired upload"
+    ]
+  },
+  "review": {
+    "status": "one final independent review, one fix pass",
+    "initialImportant": 1,
+    "diagnosticMinorRegradedImportant": 1,
+    "importantFixed": 2,
+    "plannedStatusUpdatesCompleted": true,
+    "deferredMinor": [],
+    "unverifiedByDesign": [
+      "native integration and strict-mode require D4",
+      "successful retrieval, server CPU cancel, restart not tested",
+      "license notices need recheck before any future fork"
+    ]
+  },
+  "outcome": "complete"
+}
