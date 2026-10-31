@@ -28,8 +28,8 @@ export async function writeSnapshot(directory:string,snapshot:Snapshot,beforeCom
     await rename(temporary,join(directory,'memory.json'));
   }finally{await rm(temporary,{force:true}).catch(()=>undefined);}
 }
-export async function writeRollback(directory:string,snapshot:Snapshot):Promise<void>{
-  const file=join(directory,`before-restore-${randomUUID()}.json`);const handle=await open(file,'wx',0o600);
+export async function writeRollback(directory:string,snapshot:Snapshot,reason:'restore'|'core2'='restore'):Promise<void>{
+  const file=join(directory,`before-${reason}-${randomUUID()}.json`);const handle=await open(file,'wx',0o600);
   try{await handle.writeFile(encodeSnapshot(snapshot),'utf8');await handle.sync();}finally{await handle.close();}
 }
 export async function writeImportBackup(directory:string,id:string,snapshot:Snapshot):Promise<void>{

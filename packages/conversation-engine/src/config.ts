@@ -1,6 +1,8 @@
 import { createConfigSchematics } from "@lmstudio/sdk";
 
 export const configSchematics = createConfigSchematics()
+  .field('memoryEnabled','boolean',{displayName:'Запоминание по просьбе',subtitle:'Общая заметка сохраняется сразу. Служебный разбор текущей моделью и проверка ответа добавляют задержку; обычный ответ показывается после проверки. Только этот чат; карточки — CORE-3.'},false)
+  .field('memoryLinkFile','string',{displayName:'Файл подключения памяти',subtitle:'Панель Companion → Память → Включить подключение к чату. Скопируйте путь к файлу, не его содержимое. Панель должна работать.'},'')
   .field(
     "autoCompact",
     "boolean",

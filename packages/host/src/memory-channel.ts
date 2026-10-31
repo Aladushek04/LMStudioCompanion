@@ -40,12 +40,14 @@ export function createMemoryChannel(directory:string,get:()=>Promise<MemoryStore
     const request=envelope.request;if(socket.destroyed)return;
     if(request.action==='capture'){if(!proposals)throw Error('Capture unavailable');const value=await proposals.capture(request.text,request.mode);if(!socket.destroyed){io.write({ok:true,value});socket.end();}return;}
     const store=await get();if(socket.destroyed)return;
+    if(request.action==='memory-state'){const view=await store.readView();io.write({ok:true,value:{revision:view.revision}});socket.end();return;}
     if(request.action==='begin-save'){
      for(const [key,g] of saves)if(Date.now()-g.at>120000)saves.delete(key);
      if(saves.size>=128)throw Error('Слишком много подготовленных операций.');
      const view=await store.readView(),grant=randomUUID();
-     saves.set(grant,{at:Date.now(),operationId:request.operationId,content:request.content,baseRevision:view.revision});
-     io.write({ok:true,value:{operationId:request.operationId,grant,baseRevision:view.revision}});socket.end();return;
+     const baseRevision=request.expectedStoreRevision??view.revision;
+     saves.set(grant,{at:Date.now(),operationId:request.operationId,content:request.content,baseRevision});
+     io.write({ok:true,value:{operationId:request.operationId,grant,baseRevision}});socket.end();return;
     }
     if(request.action==='operation'){io.write({ok:true,value:await store.getOperation(request.operationId)});socket.end();return;}
     if(request.action==='save'){

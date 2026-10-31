@@ -11,7 +11,8 @@ export const requestSchema=z.discriminatedUnion('action',[
  z.object({action:z.literal('recall'),query:z.string().max(4096)}).strict(),
  z.object({action:z.literal('usage'),grant:z.string().uuid(),refs:z.array(refSchema).max(5)}).strict(),
  z.object({action:z.literal('capture'),text:z.string().max(4096),mode:z.enum(['explicit','suggest'])}).strict(),
- z.object({action:z.literal('begin-save'),operationId:z.string().uuid(),content:z.string().trim().min(1).max(16000)}).strict(),
+ z.object({action:z.literal('memory-state')}).strict(),
+ z.object({action:z.literal('begin-save'),operationId:z.string().uuid(),content:z.string().trim().min(1).max(16000),expectedStoreRevision:z.number().int().nonnegative().optional()}).strict(),
  explicitSaveSchema.extend({grant:z.string().uuid()}),
  z.object({action:z.literal('operation'),operationId:z.string().uuid()}).strict(),
 ]);

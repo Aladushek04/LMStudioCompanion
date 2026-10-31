@@ -39,3 +39,11 @@ it('missing or mismatched authority does not save; manual change invalidates pre
  await f.owner.handle('/api/memory','POST',{content:'Ручная запись',pinned:false,category:'note',scope:'global',projectId:null},new AbortController().signal);
  expect((await f.call({...input,grant:grant.grant})).state).toBe('conflict');expect(await (await f.owner.get()).listMemories()).toHaveLength(1);
 });
+it('revision from before semantic interpretation protects a manual edit during the LLM request',async()=>{
+ const f=await fixture(),operationId=randomUUID(),content='Поздняя заметка';
+ const head=await f.call({action:'memory-state'});expect(head.revision).toBe(0);
+ await f.owner.handle('/api/memory','POST',{content:'Ручная правка во время разбора',pinned:false,category:'note',scope:'global',projectId:null},new AbortController().signal);
+ const grant=await f.call({action:'begin-save',operationId,content,expectedStoreRevision:head.revision});
+ expect((await f.call({action:'save',operationId,content,grant:grant.grant,expectedStoreRevision:grant.baseRevision,targetId:null,targetRevision:null})).state).toBe('conflict');
+ expect(await (await f.owner.get()).listMemories()).toHaveLength(1);
+});

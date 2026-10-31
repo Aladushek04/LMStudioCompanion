@@ -20,6 +20,8 @@ import { setTimeout as waitBeforeRetry } from "node:timers/promises";
 import {runCompanionTurn,CoreTurnError,type CoreTurn} from './companion/turn';
 import {showCoreStatus,isCoreStatusText} from './companion/status-command';
 import {runConfirmedTool} from './companion/tool-call';
+import {handleMemoryTurn} from './companion/memory-turn';
+import {guardMemoryOutput} from './companion/memory-output';
 import { toCanon } from "./adapter";
 import { EffectiveSizes, effectiveSizes, pickPromptVariant } from "./budget";
 import { ChunkCache } from "./cache";
@@ -434,7 +436,7 @@ function sum(nums: number[], from: number, to: number): number {
 export async function predictionLoopHandler(
   ctl: PredictionLoopHandlerController,
 ): Promise<void> {
-  await runCompanionTurn(ctl,turn=>runHandler(ctl,turn));
+  await runCompanionTurn(ctl,async turn=>{if(await handleMemoryTurn(ctl,turn))return;await guardMemoryOutput(ctl,turn,guarded=>runHandler(guarded,turn));});
 }
 
 async function runHandler(ctl: PredictionLoopHandlerController,turn:CoreTurn): Promise<void> {

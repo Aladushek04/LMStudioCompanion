@@ -1,4 +1,5 @@
 import {z} from 'zod';
+export const normalizeNoteText=(text:string)=>text.normalize('NFKC').trim().replace(/\s+/g,' ').toLocaleLowerCase('ru');
 export const explicitSaveSchema=z.object({
  action:z.literal('save'),operationId:z.string().uuid(),content:z.string().trim().min(1).max(16000),
  expectedStoreRevision:z.number().int().nonnegative(),targetId:z.null(),targetRevision:z.null(),

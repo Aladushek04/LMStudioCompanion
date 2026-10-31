@@ -1,5 +1,5 @@
 import {randomUUID,createHash} from 'node:crypto';
-import {explicitSaveSchema,receipt,type ExplicitSave,type MemoryReceipt,type StoredOperation} from './operations.js';
+import {explicitSaveSchema,normalizeNoteText,receipt,type ExplicitSave,type MemoryReceipt,type StoredOperation} from './operations.js';
 import {join} from 'node:path';
 import {readdir} from 'node:fs/promises';
 import type {OperationResult} from '../../core/src/contracts.js';
@@ -49,11 +49,12 @@ export class MemoryStore {
       if(signal?.aborted)return success(receipt(input.operationId,'cancelled','Сохранение отменено до записи.'));
       if(input.expectedStoreRevision!==this.snapshot.revision)return success(receipt(input.operationId,'conflict','Память изменилась после подготовки. Сохранение не выполнено; уточните актуальный текст.'));
       if((this.snapshot.operations?.length??0)>=2048)return success(receipt(input.operationId,'limit','Журнал операций заполнен. Используйте панель; повторная запись не выполнена.'));
-      const normalized=(text:string)=>text.normalize('NFKC').trim().replace(/\s+/g,' ').toLocaleLowerCase('ru');
-      const duplicate=[...this.records.values()].find(r=>r.scope==='global'&&r.deletedAt===null&&normalized(r.content)===normalized(input.content));
+      const duplicate=[...this.records.values()].find(r=>r.scope==='global'&&r.deletedAt===null&&normalizeNoteText(r.content)===normalizeNoteText(input.content));
       const now=Date.now(),record=duplicate??memoryRecordSchema.parse({...memoryInputSchema.parse({identityKey:'core.'+input.operationId,content:input.content,scope:'global',projectId:null,sessionId:null,source:'chat-explicit'}),id:randomUUID(),createdAt:now,updatedAt:now,revision:1,manualPriority:true,deletedAt:null,lastAccessedAt:0,accessCount:0});
       const next=new Map(this.records);next.set(record.id,record);
       const operation:StoredOperation={operationId:input.operationId,signature,state:duplicate?'duplicate':'saved',recordId:record.id,recordRevision:record.revision};
+      // First use extends the snapshot with durable receipts. The current owner backs up the old format.
+      if(!this.snapshot.operations){signal?.throwIfAborted();await writeRollback(this.directory,this.snapshot,'core2');}
       await this.commit(next,true,signal,operation);
       return success(this.operationResult(operation));
     });

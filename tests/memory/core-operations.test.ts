@@ -1,5 +1,5 @@
 import {it,expect,afterEach} from 'vitest';
-import {mkdtemp,rm,readFile} from 'node:fs/promises';
+import {mkdtemp,rm,readFile,readdir} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {randomUUID} from 'node:crypto';
@@ -53,4 +53,12 @@ it('concurrent redelivery is serialized and content duplicates have one active r
  const f=await fixture(),input=request(),store=f.store as any;
  const results=await Promise.all([store.saveExplicit(input),store.saveExplicit(input)]);expect(results[0]).toEqual(results[1]);
  const duplicate=await store.saveExplicit({...request(),expectedStoreRevision:1});expect(duplicate.state).toBe('duplicate');expect(await f.store.listMemories()).toHaveLength(1);
+});
+it('first journal upgrade creates an owner-written pre-CORE2 backup exactly once',async()=>{
+ const f=await fixture(),before=await readFile(join(f.directory,'memory.json'),'utf8'),input=request();
+ await f.store.saveExplicit(input);
+ const backups=(await readdir(f.directory)).filter(name=>name.startsWith('before-core2-'));expect(backups).toHaveLength(1);
+ expect(await readFile(join(f.directory,backups[0]!),'utf8')).toBe(before);
+ await f.store.saveExplicit({...request('Другая учебная заметка'),expectedStoreRevision:1});
+ expect((await readdir(f.directory)).filter(name=>name.startsWith('before-core2-'))).toHaveLength(1);
 });

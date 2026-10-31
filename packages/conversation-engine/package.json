@@ -1,6 +1,6 @@
 {
   "name": "lmstudio-companion-core",
-  "version": "0.1.0-core1",
+  "version": "0.1.0-core2",
   "private": true,
   "type": "commonjs",
   "main": "index.js",

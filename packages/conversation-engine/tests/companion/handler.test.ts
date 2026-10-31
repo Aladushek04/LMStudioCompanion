@@ -18,7 +18,7 @@ function fixture(tools: any[] = [], command = 'Синтетический воп
             opts.onRoundEnd(0);
         }) };
     const ctl = { abortSignal: abort.signal, client: {}, tokenSource: async () => source, pullHistory: async () => history, getPluginConfig: () => ({ get: (key: string) => configs[key] }), startToolUseSession: async () => ({ tools, [Symbol.dispose]: dispose }), requestConfirmToolCall: vi.fn(async () => ({ type: 'allow' } as any)), createStatus: (s: any) => { statuses.push(s); return { setState: (v: any) => statuses.push(v) }; }, createContentBlock: vi.fn(() => ({ appendText: (text: string) => texts.push(text), appendToolRequest: vi.fn(), appendToolResult: (result: any) => texts.push('RESULT:' + result.callId + ':' + result.content), pipeFrom: async (prediction: any) => { const result = await prediction; texts.push(result.content); return result; } })), createToolStatus: (_id: number, initial: any) => { toolStates.push(initial); return { setCustomStatusText: vi.fn(), addWarning: vi.fn(), setStatus: (v: any) => toolStates.push(v) }; }, setSenderName: vi.fn(), onAborted: (callback: () => void) => abort.signal.addEventListener('abort', callback, { once: true }), debug: vi.fn() };
-    return { source, ctl: ctl as unknown as PredictionLoopHandlerController, raw: ctl, abort, history, dispose, texts, statuses, toolStates };
+    return { source, ctl: ctl as unknown as PredictionLoopHandlerController, raw: ctl, abort, history, dispose, texts, statuses, toolStates,configs };
 }
 it('entry handler produces an answer through the owned cycle', async () => {
     const f = fixture();
@@ -27,6 +27,20 @@ it('entry handler produces an answer through the owned cycle', async () => {
     expect(f.dispose).toHaveBeenCalledOnce();
     expect(f.statuses.at(-1)?.text).toContain('Companion Core');
     expect(f.source.act).toHaveBeenCalledOnce();
+});
+it('memory-enabled entry never releases an unverified success when interpretation misses the request',async()=>{
+ const f=fixture([], 'Прошу держать в памяти учебную метку');f.configs.memoryEnabled=true;f.configs.memoryLinkFile='G:/missing-synthetic-link.json';
+ f.source.respond.mockImplementation(()=>Object.assign(Promise.resolve({content:JSON.stringify({intent:'none',kind:'note',authorization:'',content:'',sourceIndex:-1,question:''}),reasoningContent:''}),{cancel:async()=>{}}));
+ f.source.act.mockImplementation(async(_view:any,_tools:any,opts:any)=>{opts.onRoundStart(0);opts.onPredictionFragment({content:'Запись надёжно сохранена навсегда',reasoningType:'none'});opts.onMessage(ChatMessage.create('assistant','Запись надёжно сохранена навсегда'));opts.onRoundEnd(0);});
+ await predictionLoopHandler(f.ctl);
+ expect(f.texts.join('')).not.toContain('сохранена навсегда');
+ expect(f.texts.join('')).toContain('память не изменялась');
+});
+it('memory-enabled ordinary answer is released only after semantic result check',async()=>{
+ const f=fixture();f.configs.memoryEnabled=true;f.configs.memoryLinkFile='G:/missing-synthetic-link.json';
+ f.source.respond.mockImplementationOnce(()=>Object.assign(Promise.resolve({content:JSON.stringify({intent:'none',kind:'note',authorization:'',content:'',sourceIndex:-1,question:''}),reasoningContent:''}),{cancel:async()=>{}}));
+ f.source.respond.mockImplementationOnce(()=>Object.assign(Promise.resolve({content:'{"reportsSuccess":false}',reasoningContent:''}),{cancel:async()=>{}}));
+ await predictionLoopHandler(f.ctl);expect(f.texts).toContain('Учебный ответ');
 });
 it('/core identifies the running handler without generating text', async () => {
     const f = fixture([], '/core');
