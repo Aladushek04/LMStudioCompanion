@@ -16,6 +16,10 @@ import {
 } from "@lmstudio/sdk";
 import { homedir } from "os";
 import { join } from "path";
+import { setTimeout as waitBeforeRetry } from "node:timers/promises";
+import {runCompanionTurn,CoreTurnError,type CoreTurn} from './companion/turn';
+import {showCoreStatus,isCoreStatusText} from './companion/status-command';
+import {runConfirmedTool} from './companion/tool-call';
 import { toCanon } from "./adapter";
 import { EffectiveSizes, effectiveSizes, pickPromptVariant } from "./budget";
 import { ChunkCache } from "./cache";
@@ -376,13 +380,6 @@ async function countRememberedAttachments(
   }
   return count > 0 ? count : undefined;
 }
-function isRealModel(source: unknown): source is LLM {
-  return (
-    typeof (source as LLM).countTokens === "function" &&
-    typeof (source as LLM).getContextLength === "function"
-  );
-}
-
 /**
  * Detect once per model whether its chat template accepts a system-role
  * message at all — stock Gemma and some Mistral variants throw on one. Runs
@@ -437,32 +434,14 @@ function sum(nums: number[], from: number, to: number): number {
 export async function predictionLoopHandler(
   ctl: PredictionLoopHandlerController,
 ): Promise<void> {
-  // The handler must never die silently: an uncaught throw leaves the user
-  // a stale status and an empty "This message contains no content" reply.
-  try {
-    await runHandler(ctl);
-  } catch (error) {
-    if (ctl.abortSignal.aborted) return;
-    try {
-      const block = ctl.createContentBlock({
-        includeInContext: false,
-        style: { type: "customLabel", label: "context-compressor" },
-      });
-      const message =
-        error instanceof Error ? error.message : String(error);
-      block.appendText(
-        `${SENTINEL} context-compressor error: ${message.split(/\r?\n/)[0].slice(0, 300)}`,
-      );
-    } catch {
-      // prediction process already torn down; nothing left to render into
-    }
-  }
+  await runCompanionTurn(ctl,turn=>runHandler(ctl,turn));
 }
 
-async function runHandler(ctl: PredictionLoopHandlerController): Promise<void> {
+async function runHandler(ctl: PredictionLoopHandlerController,turn:CoreTurn): Promise<void> {
+  if(showCoreStatus(ctl,turn))return;
   const cfg = ctl.getPluginConfig(configSchematics);
-  const source = await ctl.tokenSource();
-  const history = await ctl.pullHistory();
+  const source = turn.source;
+  const history = turn.history;
   const rawMessages = history.getMessagesArray();
 
   // Leading system messages (the user's system prompt) always stay verbatim.
@@ -487,33 +466,12 @@ async function runHandler(ctl: PredictionLoopHandlerController): Promise<void> {
   // mixing a command with real content keeps the content (command stripped).
   const pairs: Pair[] = [];
   for (const p of allPairs) {
+    if(p.canon.role==='user'&&isCoreStatusText(p.canon.text))continue;
     const transformed = transformForView(p.canon);
     if (transformed === null) continue;
     pairs.push(transformed === p.canon ? p : { canon: transformed });
   }
   const msgs = pairs.map((p) => p.canon);
-
-  if (!isRealModel(source)) {
-    // A generator plugin is selected as the token source: we cannot count
-    // tokens, so pass through unchanged (visibly, not silently).
-    const status = ctl.createStatus({
-      status: "error",
-      text: "context-compressor needs a real model as the token source; passing through uncompressed.",
-    });
-    void status;
-    const view = buildView(
-      composeSystemMessage(preamble.map((m) => m.getText()), []),
-      pairs,
-      0,
-      "system",
-    );
-    const block = ctl.createContentBlock();
-    await source.respond(view, {
-      signal: ctl.abortSignal,
-      onPredictionFragment: (fragment) => block.appendText(fragment.content),
-    });
-    return;
-  }
 
   const cache = await getCache();
   const state = getModelState(
@@ -778,7 +736,7 @@ async function runHandler(ctl: PredictionLoopHandlerController): Promise<void> {
     });
     const block = ctl.createContentBlock({
       includeInContext: false,
-      style: { type: "customLabel", label: "context-compressor" },
+      style: { type: "customLabel", label: "Companion Core" },
     });
     block.appendText(`${SENTINEL} Context usage\n${report}`);
     return; // /usage never runs a model reply
@@ -1068,7 +1026,7 @@ async function runHandler(ctl: PredictionLoopHandlerController): Promise<void> {
     if (force) {
       forceBlock = ctl.createContentBlock({
         includeInContext: false,
-        style: { type: "customLabel", label: "context-compressor" },
+        style: { type: "customLabel", label: "Companion Core" },
       });
       forceBlock.appendText(
         `${SENTINEL} Compacting ${plan.cuts.length} chunk(s)${resumedNote} — progress above. Stopping is safe: finished chunks are saved and /compact resumes.`,
@@ -1198,7 +1156,7 @@ async function runHandler(ctl: PredictionLoopHandlerController): Promise<void> {
     } else {
       const block = ctl.createContentBlock({
         includeInContext: false,
-        style: { type: "customLabel", label: "context-compressor" },
+        style: { type: "customLabel", label: "Companion Core" },
       });
       block.appendText(text);
     }
@@ -1217,21 +1175,9 @@ async function runHandler(ctl: PredictionLoopHandlerController): Promise<void> {
   );
   // Tool definitions consume context too — create the session up front so
   // their cost is measured and budgeted alongside the rendered prompt.
-  let session: { tools: Tool[]; [Symbol.dispose](): void } | undefined;
-  try {
-    session = (await ctl.startToolUseSession()) as unknown as {
-      tools: Tool[];
-      [Symbol.dispose](): void;
-    };
-  } catch {
-    session = undefined;
-    ctl.createStatus({
-      status: "error",
-      text: "Tool session failed to initialize — replying WITHOUT external tools. Stop this reply if the task needs them.",
-    });
-  }
+  // The Companion lifecycle acquires and owns this session before any generation.
   const sessionTools = wrapToolsWithCap(
-    (session?.tools ?? []) as (Tool & {
+    turn.tools as (Tool & {
       implementation: (
         params: Record<string, unknown>,
         ctx: unknown,
@@ -1500,16 +1446,7 @@ async function runHandler(ctl: PredictionLoopHandlerController): Promise<void> {
     if (totalPrompt >= contextLength) {
       // Guaranteed engine rejection: refuse the prediction with an
       // actionable message instead of letting it fail cryptically.
-      const block = ctl.createContentBlock({
-        includeInContext: false,
-        style: { type: "customLabel", label: "context-compressor" },
-      });
-      block.appendText(
-        `${SENTINEL} Prompt cannot fit: ~${totalPrompt.toLocaleString()} tokens (incl. ~${toolSchemaTokens.toLocaleString()} of tool definitions) vs a ${contextLength.toLocaleString()}-token context. ` +
-          `Try: raise the model's context length, lower "Recent context kept verbatim", or disable unused tool plugins, then send your message again.`,
-      );
-      session?.[Symbol.dispose]();
-      return;
+      throw new CoreTurnError('CONTEXT_LIMIT',`Запрос не помещается в контекст: около ${totalPrompt.toLocaleString('ru-RU')} токенов при окне ${contextLength.toLocaleString('ru-RU')}. Уменьшите объём материалов или число подключённых инструментов.`);
     }
     if (totalPrompt > safeBudget) {
       ctl.createStatus({
@@ -1529,7 +1466,7 @@ async function runHandler(ctl: PredictionLoopHandlerController): Promise<void> {
   if (coveredUpTo > initialCovered && cfg.get("showStats")) {
     const block = ctl.createContentBlock({
       includeInContext: false,
-      style: { type: "customLabel", label: "context-compressor" },
+      style: { type: "customLabel", label: "Companion Core" },
     });
     block.appendText(
       `${SENTINEL} Auto-compacted: ~${uncompressedTokens.toLocaleString()} -> ~${promptTokens.toLocaleString()} tokens in the prompt.`,
@@ -1578,6 +1515,7 @@ async function runHandler(ctl: PredictionLoopHandlerController): Promise<void> {
       });
       ctl.onAborted(() => void prediction.cancel());
       const result = await block.pipeFrom(prediction);
+      ctl.abortSignal.throwIfAborted();
       const fallback = decideFallback({
         visibleChars: extractPayload(result).length,
         reasoningText: result.reasoningContent !== "" ? result.reasoningContent : result.content,
@@ -1588,7 +1526,7 @@ async function runHandler(ctl: PredictionLoopHandlerController): Promise<void> {
       } else if (fallback?.kind === "notice") {
         const noticeBlock = ctl.createContentBlock({
           includeInContext: false,
-          style: { type: "customLabel", label: "context-compressor" },
+          style: { type: "customLabel", label: "Companion Core" },
         });
         noticeBlock.appendText(fallback.text);
       }
@@ -1609,7 +1547,6 @@ async function runHandler(ctl: PredictionLoopHandlerController): Promise<void> {
       // 27B model can take tens of seconds to come back.
       const RETRY_DELAYS_MS = [1000, 5000, 15000];
       let retriesUsed = 0;
-      let actSource: LLM = source;
       // Stays true unless the loop exits via the normal completion break
       // below — distinguishes "ran out of passes" from "task finished".
       let passCapHit = true;
@@ -1624,7 +1561,7 @@ async function runHandler(ctl: PredictionLoopHandlerController): Promise<void> {
           try {
             passResult = await actWithUi(
               ctl,
-              actSource,
+              source,
               currentView,
               tools,
               roundsPerPass > 0 ? roundsPerPass : undefined,
@@ -1648,23 +1585,18 @@ async function runHandler(ctl: PredictionLoopHandlerController): Promise<void> {
               !ctl.abortSignal.aborted &&
               isTransientEngineError(error) &&
               passStats.executedToolCalls === 0 &&
+              passStats.toolRequestCount === 0 &&
               passStats.visibleChars === 0
             ) {
               const delay = RETRY_DELAYS_MS[retriesUsed];
               retriesUsed++;
               ctl.createStatus({
                 status: "loading",
-                text: `Transient engine error — retrying in ${delay / 1000}s (${retriesUsed}/${RETRY_DELAYS_MS.length}; the model may be reloading)…`,
+                text: `Companion Core: связь с моделью прервалась; повтор через ${delay / 1000} с (${retriesUsed}/${RETRY_DELAYS_MS.length})…`,
               });
-              await new Promise((resolve) => setTimeout(resolve, delay));
-              // A fresh token source triggers LM Studio's just-in-time
-              // reload when the model unloaded out from under us.
-              try {
-                const fresh = await ctl.tokenSource();
-                if (isRealModel(fresh)) actSource = fresh;
-              } catch {
-                // keep the existing handle; the retry will tell
-              }
+              // Keep this turn's selected source; do not trigger JIT reload.
+              await waitBeforeRetry(delay, undefined, { signal: ctl.abortSignal });
+              ctl.abortSignal.throwIfAborted();
             } else {
               throw error;
             }
@@ -1816,7 +1748,7 @@ async function runHandler(ctl: PredictionLoopHandlerController): Promise<void> {
         // stops with no error and no sign the task is still in progress.
         const block = ctl.createContentBlock({
           includeInContext: false,
-          style: { type: "customLabel", label: "context-compressor" },
+          style: { type: "customLabel", label: "Companion Core" },
         });
         block.appendText(
           `${SENTINEL} Reached the safety cap of 24 tool passes — the task was paused, not finished. Send any message to continue.`,
@@ -1824,19 +1756,8 @@ async function runHandler(ctl: PredictionLoopHandlerController): Promise<void> {
       }
     }
   } catch (error) {
-    if (ctl.abortSignal.aborted) return;
-    const block = ctl.createContentBlock({
-      includeInContext: false,
-      style: { type: "customLabel", label: "context-compressor" },
-    });
-    const hint = isTransientEngineError(error)
-      ? " — the engine appears to have crashed or the model unloaded; reload the model and resend your message (retries were attempted)."
-      : "";
-    block.appendText(
-      `${SENTINEL} Prediction failed: ${error instanceof Error ? error.message : String(error)}${hint}`,
-    );
-  } finally {
-    session?.[Symbol.dispose]();
+    // The lifecycle reports a single outcome and always releases tools.
+    throw error;
   }
 }
 
@@ -2068,21 +1989,27 @@ async function actWithUi(
       params: Record<string, unknown>,
       ctx: ToolCallCtx,
     ) => {
-      // Mark BEFORE invoking: from here on a side effect may have begun,
-      // which permanently disqualifies this pass from being retried.
-      if (stats) stats.executedToolCalls++;
       const result = await runWithToolStatus(
         ctx,
         toolStatusFactory,
-        async (bridged) =>
-          (
-            tool as Tool & {
-              implementation: (
-                p: Record<string, unknown>,
-                c: unknown,
-              ) => unknown | Promise<unknown>;
-            }
-          ).implementation(params, bridged),
+        async (bridged, phase) =>
+          runConfirmedTool(ctl, tool, params, bridged, async (approved) => {
+            phase({ type: "callingTool" });
+            // Mark only after native permission, before a side effect can begin.
+            if (stats) stats.executedToolCalls++;
+            return (
+              tool as Tool & {
+                implementation: (
+                  p: Record<string, unknown>,
+                  c: unknown,
+                ) => unknown | Promise<unknown>;
+              }
+            ).implementation(approved, bridged);
+          }),
+        Date.now,
+        tool.type === "remoteTool"
+          ? { type: "confirmingToolCall" }
+          : { type: "callingTool" },
       );
       if (ctx.callId !== undefined) {
         const resultBlock = ctl.createContentBlock({ roleOverride: "tool" });
@@ -2139,7 +2066,7 @@ async function actWithUi(
         .slice(0, 200);
       ctl.createStatus({
         status: "error",
-        text: `Invalid tool request${request ? ` (${request.name})` : ""}: ${firstLine}`,
+        text: `Companion Core: некорректный запрос инструмента${request ? ` (${request.name})` : ""}: ${firstLine}`,
       });
       return invalidToolRequestResult(error.message);
     },
@@ -2171,11 +2098,15 @@ async function actWithUi(
     onToolCallRequestFinalized: (_roundIndex, callId, info) => {
       toolRequestCount++;
       if (stats) stats.toolRequestCount = toolRequestCount;
+      const requestedTool = tools.find(tool => tool.name === info.toolCallRequest.name);
       mainBlock().appendToolRequest({
         callId,
         toolCallRequestId: info.toolCallRequest.id,
         name: info.toolCallRequest.name,
         parameters: info.toolCallRequest.arguments ?? {},
+        pluginIdentifier: requestedTool?.type === "remoteTool"
+          ? requestedTool.pluginIdentifier
+          : undefined,
       });
     },
   }).catch((error: unknown) => {
@@ -2183,6 +2114,9 @@ async function actWithUi(
     // user Stop or an engine error still propagates.
     if (!cap.isCapAbort()) throw error;
   });
+  // Some SDK backends resolve normally after Stop. Do not publish a fallback
+  // answer from their unfinished reasoning or continue into another pass.
+  ctl.abortSignal.throwIfAborted();
 
   // A capped pass is mid-task by definition: its rounds were tool calls plus
   // reasoning, and the next pass continues. Nothing to promote or notice.
@@ -2199,7 +2133,7 @@ async function actWithUi(
   } else if (fallback?.kind === "notice") {
     const noticeBlock = ctl.createContentBlock({
       includeInContext: false,
-      style: { type: "customLabel", label: "context-compressor" },
+      style: { type: "customLabel", label: "Companion Core" },
     });
     noticeBlock.appendText(fallback.text);
   }

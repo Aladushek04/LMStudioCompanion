@@ -13,6 +13,7 @@ import { isToolErrorResult, toolErrorMessage } from "./toolWrap";
 
 export type ToolStatusState =
   | { type: "callingTool" }
+  | { type: "confirmingToolCall" }
   | { type: "toolCallSucceeded"; timeMs: number }
   | { type: "toolCallFailed"; error: string };
 
@@ -47,18 +48,19 @@ export interface ToolCallCtx {
 export async function runWithToolStatus<T>(
   ctx: ToolCallCtx,
   factory: ToolStatusFactory,
-  run: (ctx: ToolCallCtx) => Promise<T>,
+  run: (ctx: ToolCallCtx,phase:(state:ToolStatusState)=>void) => Promise<T>,
   now: () => number = Date.now,
+  initial:ToolStatusState={type:'callingTool'},
 ): Promise<T> {
   const callId = ctx.callId;
-  if (callId === undefined) return run(ctx);
+  if (callId === undefined) return run(ctx,()=>{});
   let sink: ToolStatusSink | undefined;
   try {
-    sink = factory(callId, { type: "callingTool" });
+    sink = factory(callId, initial);
   } catch {
     sink = undefined;
   }
-  if (sink === undefined) return run(ctx);
+  if (sink === undefined) return run(ctx,()=>{});
   const safe = (fn: () => void) => {
     try {
       fn();
@@ -80,7 +82,7 @@ export async function runWithToolStatus<T>(
   const started = now();
   let result: T;
   try {
-    result = await run(bridged);
+    result = await run(bridged,state=>safe(()=>sink.setStatus(state)));
   } catch (error) {
     safe(() =>
       sink.setStatus({

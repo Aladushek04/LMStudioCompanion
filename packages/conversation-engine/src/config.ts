@@ -5,10 +5,10 @@ export const configSchematics = createConfigSchematics()
     "autoCompact",
     "boolean",
     {
-      displayName: "Auto-compact",
+      displayName: "Автоматическое сжатие",
       subtitle:
-        "Automatically compress old messages when context usage crosses the threshold. " +
-        "Turn off for bulk-data tasks (log parsing, hex dumps) where the past IS the data.",
+        "Сокращать старые сообщения при заполнении контекста. " +
+        "Для дословного разбора больших исходных данных сжатие можно выключить.",
     },
     true,
   )
@@ -16,8 +16,8 @@ export const configSchematics = createConfigSchematics()
     "thresholdPercent",
     "numeric",
     {
-      displayName: "Compaction threshold (% of context)",
-      subtitle: "Compact when the prompt would exceed this share of the model's context window.",
+      displayName: "Начинать сжатие при заполнении (%)",
+      subtitle: "Доля контекста модели, после которой начинается сжатие истории.",
       min: 10,
       max: 95,
       int: true,
@@ -29,11 +29,9 @@ export const configSchematics = createConfigSchematics()
     "compactFloorPercent",
     "numeric",
     {
-      displayName: "Compact down to (% of context)",
+      displayName: "Сжимать до заполнения (%)",
       subtitle:
-        "Once compaction triggers, keep going until the prompt is below this — " +
-        "well under the trigger, so long agentic turns have headroom and " +
-        "compaction doesn't re-trigger every few turns.",
+        "Целевое заполнение после сжатия. Запас между порогами оставляет место для продолжения диалога и инструментов.",
       min: 20,
       max: 90,
       int: true,
@@ -45,10 +43,9 @@ export const configSchematics = createConfigSchematics()
     "reservedOutputTokens",
     "numeric",
     {
-      displayName: "Reserved output tokens",
+      displayName: "Резерв токенов для ответа",
       subtitle:
-        "Room kept free for the model's reply: the prompt must fit within " +
-        "context minus this reserve.",
+        "Место в контексте, оставляемое для ответа модели.",
       min: 0,
       max: 32000,
       int: true,
@@ -59,10 +56,9 @@ export const configSchematics = createConfigSchematics()
     "thresholdTokensOverride",
     "numeric",
     {
-      displayName: "Absolute token trigger (0 = use %)",
+      displayName: "Порог в токенах (0 — использовать %)",
       subtitle:
-        "Compact when the prompt exceeds this many tokens, ignoring the percentage. " +
-        "Useful for testing (e.g. 2000) or when the context length is unknown.",
+        "Порог сжатия в токенах вместо процента. Используется для настройки и проверки сжатия.",
       min: 0,
       int: true,
     },
@@ -72,8 +68,8 @@ export const configSchematics = createConfigSchematics()
     "keepRecentTokens",
     "numeric",
     {
-      displayName: "Recent context kept verbatim (tokens)",
-      subtitle: "The most recent part of the conversation is never summarized.",
+      displayName: "Сохранять последние сообщения дословно (токенов)",
+      subtitle: "Свежая часть беседы, которую сжатие оставляет без пересказа.",
       min: 500,
       max: 50000,
       int: true,
@@ -84,8 +80,8 @@ export const configSchematics = createConfigSchematics()
     "chunkTokens",
     "numeric",
     {
-      displayName: "Summarize in chunks of (tokens)",
-      subtitle: "History is summarized chunk by chunk; finished chunks are cached and reused.",
+      displayName: "Размер части для сжатия (токенов)",
+      subtitle: "История сжимается частями; готовые резюме сохраняются и используются повторно.",
       min: 1000,
       max: 64000,
       int: true,
@@ -96,11 +92,9 @@ export const configSchematics = createConfigSchematics()
     "roundsPerPass",
     "numeric",
     {
-      displayName: "Tool rounds per pass (0 = unlimited)",
+      displayName: "Раундов инструментов за проход (0 — без лимита)",
       subtitle:
-        "Long agentic turns run in passes of this many tool rounds; between " +
-        "passes the plugin can compact mid-task, so a marathon tool loop can " +
-        "never overflow the context. 0 restores one uncapped loop.",
+        "Между проходами Core проверяет размер контекста и при необходимости сжимает историю.",
       min: 0,
       max: 64,
       int: true,
@@ -111,11 +105,9 @@ export const configSchematics = createConfigSchematics()
     "maxChunksPerPass",
     "numeric",
     {
-      displayName: "Max chunks per pass (0 = auto)",
+      displayName: "Частей сжатия за проход (0 — автоматически)",
       subtitle:
-        "Limit how many chunk summaries one compaction run performs. " +
-        "Auto: only as many as needed to fit (everything for /compress). " +
-        "Progress is cached, so the next pass continues where this one stopped.",
+        "Ограничение работы за одно сжатие. В автоматическом режиме — столько, сколько нужно для контекста; /compress обрабатывает всю доступную область.",
       min: 0,
       max: 100,
       int: true,
@@ -126,10 +118,9 @@ export const configSchematics = createConfigSchematics()
     "maxToolResultTokens",
     "numeric",
     {
-      displayName: "Max tool result size (tokens, 0 = unlimited)",
+      displayName: "Лимит результата инструмента (токенов, 0 — без лимита)",
       subtitle:
-        "Oversized tool results are truncated before entering the conversation. " +
-        "Side effects still happen; only what the model sees shrinks.",
+        "Большие результаты сокращаются перед передачей модели. Само действие инструмента выполняется полностью.",
       min: 0,
       int: true,
     },
@@ -139,10 +130,9 @@ export const configSchematics = createConfigSchematics()
     "maxTotalToolResultTokens",
     "numeric",
     {
-      displayName: "Max total tool output per reply (tokens, 0 = unlimited)",
+      displayName: "Общий лимит результатов инструментов (0 — без лимита)",
       subtitle:
-        "Aggregate budget across all tool calls in one reply — the second " +
-        "line of defense after the per-result cap.",
+        "Общий токенный бюджет результатов всех инструментов за один ход.",
       min: 0,
       int: true,
     },
@@ -152,11 +142,9 @@ export const configSchematics = createConfigSchematics()
     "attachmentMemory",
     "boolean",
     {
-      displayName: "Attachment memory",
+      displayName: "Сохранять сведения из вложений при сжатии",
       subtitle:
-        "Before compressing past an attachment, preserve its content: " +
-        "documents become fact-sheets, images get described (vision models). " +
-        "Preserved once per file, cached across sessions.",
+        "Перед сжатием подготовить краткое содержание вложений и описание изображений для vision-модели. Это кэш контекста, а не постоянная память пользователя.",
     },
     true,
   )
@@ -164,11 +152,9 @@ export const configSchematics = createConfigSchematics()
     "summaryBudgetTokens",
     "numeric",
     {
-      displayName: "Summary budget (tokens, 0 = unbounded)",
+      displayName: "Бюджет резюме (токенов, 0 — без лимита)",
       subtitle:
-        "When accumulated chunk summaries exceed this, the oldest are " +
-        "consolidated into one denser summary — so summaries can never " +
-        "swallow the context, no matter how long the chat gets.",
+        "При превышении бюджета старые резюме объединяются в более краткое содержание.",
       min: 0,
       max: 64000,
       int: true,
@@ -179,7 +165,7 @@ export const configSchematics = createConfigSchematics()
     "summarizerMaxTokens",
     "numeric",
     {
-      displayName: "Max tokens per chunk summary",
+      displayName: "Максимум токенов на одно резюме",
       min: 200,
       max: 8000,
       int: true,
@@ -190,15 +176,14 @@ export const configSchematics = createConfigSchematics()
     "summarizerPromptMode",
     "select",
     {
-      displayName: "Summarizer prompt",
+      displayName: "Формат резюме",
       options: [
-        { value: "auto", displayName: "Auto (recommended)" },
-        { value: "full", displayName: "Full (10-section)" },
-        { value: "compact", displayName: "Compact" },
+        { value: "auto", displayName: "Автоматически" },
+        { value: "full", displayName: "Полный" },
+        { value: "compact", displayName: "Краткий" },
       ],
       hint:
-        "Full prompt (recommended); Compact is used automatically only as a " +
-        "rescue when a model's reasoning runs away, and can be forced here.",
+        "Автоматически используется полный формат; краткий помогает, если модель расходует бюджет на рассуждения без результата.",
     },
     "auto",
   )
@@ -206,8 +191,8 @@ export const configSchematics = createConfigSchematics()
     "showStats",
     "boolean",
     {
-      displayName: "Announce compaction in chat",
-      subtitle: "Show a token before/after note when compaction happens.",
+      displayName: "Показывать результат сжатия в чате",
+      subtitle: "Количество токенов до и после сжатия.",
     },
     true,
   )
@@ -216,14 +201,13 @@ export const configSchematics = createConfigSchematics()
     "select",
     {
       options: [
-        { value: "status", displayName: "Status line" },
-        { value: "sender", displayName: "Sender name" },
-        { value: "off", displayName: "Off" },
+        { value: "status", displayName: "Строка состояния" },
+        { value: "sender", displayName: "Имя отправителя" },
+        { value: "off", displayName: "Выключено" },
       ],
-      displayName: "Prompt meter",
+      displayName: "Индикатор контекста",
       subtitle:
-        "Where to show the real prompt size while compression is active " +
-        "(LM Studio's own context ring counts the visible transcript and cannot be overridden).",
+        "Показывает размер запроса модели после сжатия. Встроенный круг LM Studio может считать полную видимую переписку.",
     },
     "status",
   )
