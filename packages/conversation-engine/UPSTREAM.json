@@ -1,0 +1,198 @@
+{
+  "url": "https://lmstudio.ai/rootmonster/context-compressor",
+  "version": "0.8.3",
+  "project": "rootmonster/context-compressor",
+  "source": "installed public source files; no settings or user cache",
+  "files": [
+    {
+      "path": "src/adapter.ts",
+      "sha256": "68ebd9974286290f84d5ef9ea3f58a2eeb90f4adf9b2505842c3989016926f38"
+    },
+    {
+      "path": "src/agenticProtocol.ts",
+      "sha256": "1085bef896ec5db544722e9f0be68a7f179ca857032d36eece76de6fbb76d618"
+    },
+    {
+      "path": "src/attachments.ts",
+      "sha256": "2a9fed43e9c3519ca50ee727579ac481be117035fd3fdbc33e3dc584c23ba87d"
+    },
+    {
+      "path": "src/budget.ts",
+      "sha256": "dba45b1a6ddb3dc79746c8106e78d2bed4199f5f68cf46291aa7362876b8ff33"
+    },
+    {
+      "path": "src/cache.ts",
+      "sha256": "c489259f961bf05fde639eeb4c1c23403bb7468c7dd5d346b21bde7f3c85e405"
+    },
+    {
+      "path": "src/config.ts",
+      "sha256": "442a550f6fd7f62d2e658871a66ed6ecf7ac7f0591438e441dec5b138621571a"
+    },
+    {
+      "path": "src/consolidate.ts",
+      "sha256": "5af7cce696f24a8785183eae0a826214d054d5e02f0a0faa3fac794c7a3d6e63"
+    },
+    {
+      "path": "src/estimate.ts",
+      "sha256": "cabf27917acd1c17a9e8ec3fce417a40456cb17b0535ff74bda68306d9097c6e"
+    },
+    {
+      "path": "src/fallback.ts",
+      "sha256": "532c382e98205782f3bef539c3eee992503338bc1c3cec2c08ff4d98013fbe11"
+    },
+    {
+      "path": "src/handler.ts",
+      "sha256": "00c38f2469aa3cfe5de5fe55fbbf1f6b8235241bfa5cc7a60ad5d8746b9ea018"
+    },
+    {
+      "path": "src/index.ts",
+      "sha256": "f2cf333ae33c700cc029d8023739dea38dbd58866433b90f964abd8c5f5dcc67"
+    },
+    {
+      "path": "src/passCap.ts",
+      "sha256": "c5e0d05ffb8a362cd5d3c09e4bdea9f4351665534d623cd89f832848a20526cd"
+    },
+    {
+      "path": "src/plan.ts",
+      "sha256": "0684cf604ea39d398dbe6a4b7bf8b5c64e008f1f9ac2b9527bfc906f478b49b4"
+    },
+    {
+      "path": "src/progress.ts",
+      "sha256": "c2c3eafd10cb96e234dff07d1444a0e5d3ffee89053db7d93cff7b6c59ed7ee0"
+    },
+    {
+      "path": "src/reasoning.ts",
+      "sha256": "80486c363e0e0a74ab089488b9141946364b7b07e64700081b0d31052fb3284e"
+    },
+    {
+      "path": "src/retry.ts",
+      "sha256": "b59821a232cfafff771b0b9a0b5f7d0771745e56f1003ce95e2ecc530534823a"
+    },
+    {
+      "path": "src/state.ts",
+      "sha256": "0463787322387ced26b27e95fe9440971ca7bdcc736c55350ea04231cabbbb11"
+    },
+    {
+      "path": "src/summarizer.ts",
+      "sha256": "23104b76b4f105cd944fb8d7906bfb7aa1f8bd14d1e564aa0bc6ae3a73391237"
+    },
+    {
+      "path": "src/tokens.ts",
+      "sha256": "ed6219ccaf061e1ff942d3c879704bc5175810dde6d32eb87cab9bd6e6507d4f"
+    },
+    {
+      "path": "src/toolGate.ts",
+      "sha256": "3ea432d918b2f924e8381e670416337469de6fea26a80ac871a9dbc2d2ebae5e"
+    },
+    {
+      "path": "src/toolStatus.ts",
+      "sha256": "9fe38c24e78cf734762014ae7e1dd5ceb1c5c606e33ec06c416e9411224aa3d1"
+    },
+    {
+      "path": "src/toolWrap.ts",
+      "sha256": "002575593864da513ec52dd8398540f910b4c4dbd5b2372124c60f77a0557b8b"
+    },
+    {
+      "path": "src/usage.ts",
+      "sha256": "3a1326b6137c7010a77b9ec1e64af5220b2b40d3d8c50a6c242316e2ffc7a874"
+    },
+    {
+      "path": "src/view.ts",
+      "sha256": "10126999608bb36322c84f72d68db8389104af453e4a4d0f2c8fca4ff3d4b834"
+    },
+    {
+      "path": "src/viewPlan.ts",
+      "sha256": "a491054c6dda18528f9485e99bfde31929943b460eca49fbebb15a21e0087e88"
+    },
+    {
+      "path": "tests/agenticProtocol.test.ts",
+      "sha256": "dbb3361c3d51e651bd8e0d2e3db5d6a20d42fd4067995b1b778907fc9f3575c1"
+    },
+    {
+      "path": "tests/attachments.test.ts",
+      "sha256": "575349d70a68e384d4a8080398e5de2fff5089e0c574e6ec75b85a14aeb6a013"
+    },
+    {
+      "path": "tests/budget.test.ts",
+      "sha256": "9f7576ac3b30ec81673257b277f48ae7972d6f0ac4d4fd61256455def2e73b21"
+    },
+    {
+      "path": "tests/cache.test.ts",
+      "sha256": "f54df2c1aaf235471951917b5ed06367721d9a0ec2ca9ddc3c12a7e6710660b7"
+    },
+    {
+      "path": "tests/consolidate.test.ts",
+      "sha256": "d5f823e17bd089a902dbf50e3d103fd2ef6f8b9acdbd1849808bdc4a52bd76c1"
+    },
+    {
+      "path": "tests/estimate.test.ts",
+      "sha256": "3513dd437ff22dd04dd73ef2b272338c27fa502ebf899a3054fe45aaa1882b9c"
+    },
+    {
+      "path": "tests/fallback.test.ts",
+      "sha256": "d4bbde36f43a9c6b57e6db26f9101999d2d179af3feb3b79990285a40cc0a10b"
+    },
+    {
+      "path": "tests/passCap.test.ts",
+      "sha256": "6824a17a5dcc4722ce8504e29cfbff7c220677309748e52ec1ebef38b16b4e3f"
+    },
+    {
+      "path": "tests/plan.test.ts",
+      "sha256": "cbf19488d4fedf4b2ab42601d4fc36732a6cb16cbb49a01a07e1002f749facd8"
+    },
+    {
+      "path": "tests/progress.test.ts",
+      "sha256": "4bd86325bf90f31429ca2620c6ac20d5150a519fd91bd14be52c0685b48412c0"
+    },
+    {
+      "path": "tests/reasoning.test.ts",
+      "sha256": "90c12f258fc489faa8ff53c7a60832041e412efe8b287870ec371d05313ce53b"
+    },
+    {
+      "path": "tests/retry.test.ts",
+      "sha256": "a0874449cc2ace428516f4c655b3569a8e645ee63b6f1bd3778a5605fdd8692c"
+    },
+    {
+      "path": "tests/state.test.ts",
+      "sha256": "4d6faf2c00bdf04e183882dbba2a8c23dece162ff4483abcf0cd738249400440"
+    },
+    {
+      "path": "tests/summarizer.test.ts",
+      "sha256": "a2ce627d20a5f32c69772a8272744031b98488e0c6b78e5ff987996892c58446"
+    },
+    {
+      "path": "tests/tokens.test.ts",
+      "sha256": "b6537598a4c5803f942168c60d1d57df78a216a7ff43a7140ea7e5db25f08b35"
+    },
+    {
+      "path": "tests/toolGate.test.ts",
+      "sha256": "00a337c9c1525d6a793aea673e5478355b027ed5eeb1fad69085e96a65deec37"
+    },
+    {
+      "path": "tests/toolStatus.test.ts",
+      "sha256": "9c6a9ceef725192abf1f6f2649eedf5e01e0bc362b31a0c2b4d7493a4feb969a"
+    },
+    {
+      "path": "tests/toolWrap.test.ts",
+      "sha256": "fc53de1efff8a5dd814189f4cd78c6e75d68be52e873d705233bba1274444961"
+    },
+    {
+      "path": "tests/usage.test.ts",
+      "sha256": "a58d2e4033fbeb43ae74e731e9328c279c19b108ef6f3ca2d06709029e946e2f"
+    },
+    {
+      "path": "tests/view.test.ts",
+      "sha256": "ca2e2392dfc1f4fe63d75a43982626597b274f443e8c925f692e6e86aab66806"
+    },
+    {
+      "path": "tests/viewPlan.test.ts",
+      "sha256": "993d2170397cf63dd9ff1d6eca676d53318c6d2cf5fb404d546dff89d4367a9f"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "eca1af7d54034ea37ab527b5cbd586cdfad4c59332f3b30c15ea0e40df9e92a3"
+    }
+  ],
+  "hubRevision": 27,
+  "importedOn": "2026-11-01"
+}

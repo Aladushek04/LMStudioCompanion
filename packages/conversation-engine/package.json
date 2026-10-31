@@ -1,0 +1,9 @@
+{
+  "name": "lmstudio-companion-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "index.js",
+  "license": "SEE LICENSE IN LICENSE",
+  "dependencies": { "@lmstudio/sdk": "1.5.0" }
+}

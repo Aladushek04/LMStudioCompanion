@@ -1,0 +1,11 @@
+import {build} from 'esbuild';
+import {copyFile,mkdir} from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
+import {resolve} from 'node:path';
+const root=fileURLToPath(new URL('../',import.meta.url));
+const source=resolve(root,'packages/conversation-engine');
+const target=resolve(root,'.tools/companion-core');
+await mkdir(resolve(target,'src'),{recursive:true});
+await build({entryPoints:[resolve(source,'src/index.ts')],outfile:resolve(target,'src/index.ts'),bundle:true,platform:'node',format:'cjs',target:'node22',external:['@lmstudio/sdk']});
+for(const file of ['manifest.json','package.json','LICENSE','UPSTREAM.json','README.md'])await copyFile(resolve(source,file),resolve(target,file));
+console.log('Собрана основа companion-core: '+target+'; установка и переключение LM Studio не выполнялись.');
