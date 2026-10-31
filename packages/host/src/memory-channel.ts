@@ -12,6 +12,7 @@ import {descriptorSchema,frames,sign,matches,requestSchema} from '../../memory/s
 import {rankMemories} from '../../memory/src/retrieval.js';
 import {UsageLog} from '../../memory/src/usage.js';
 import type {ProposalQueue} from '../../memory/src/proposals.js';
+import {receipt} from '../../memory/src/operations.js';
 const run=promisify(execFile);
 async function protect(directory:string){
  await prepareMemoryDirectory(directory);
@@ -24,12 +25,13 @@ export function createMemoryChannel(directory:string,get:()=>Promise<MemoryStore
  const file=join(directory,'connection.json'),marker=join(directory,'enabled.json');
  let server:Server|null=null,tail=Promise.resolve(),error='';const sockets=new Set<Socket>(),usage=new UsageLog();
  const grants=new Map<string,{at:number;records:Map<string,{revision:number;reason:string}>}>();
+ const saves=new Map<string,{at:number;operationId:string;content:string;baseRevision:number}>();
  const serial=(fn:()=>Promise<void>)=>{const op=tail.then(fn);tail=op.catch(()=>{});return op;};
- const close=async()=>{const s=server;server=null;for(const socket of sockets)socket.destroy();grants.clear();if(s)await new Promise<void>(resolve=>s.close(()=>resolve()));await rm(file,{force:true});};
+ const close=async()=>{const s=server;server=null;for(const socket of sockets)socket.destroy();grants.clear();saves.clear();if(s)await new Promise<void>(resolve=>s.close(()=>resolve()));await rm(file,{force:true});};
  const enable=async()=>{
   if(server)return;await protect(directory);const secret=randomBytes(32).toString('hex'),pipe='\\\\.\\pipe\\companion-memory-'+randomBytes(16).toString('hex');
   const next=createServer(socket=>{
-   if(sockets.size>=16){socket.destroy();return;}sockets.add(socket);socket.once('close',()=>sockets.delete(socket));const io=frames(socket);
+   if(sockets.size>=16){socket.destroy();return;}sockets.add(socket);const aborted=new AbortController();socket.once('close',()=>{sockets.delete(socket);aborted.abort();});const io=frames(socket);
    void(async()=>{try{
     const hello=z.object({nonce:z.string().regex(/^[a-f0-9]{64}$/)}).strict().parse(await io.read());const nonce=randomBytes(32).toString('hex');
     io.write({nonce,proof:sign(secret,'server:'+hello.nonce+':'+nonce)});
@@ -38,6 +40,23 @@ export function createMemoryChannel(directory:string,get:()=>Promise<MemoryStore
     const request=envelope.request;if(socket.destroyed)return;
     if(request.action==='capture'){if(!proposals)throw Error('Capture unavailable');const value=await proposals.capture(request.text,request.mode);if(!socket.destroyed){io.write({ok:true,value});socket.end();}return;}
     const store=await get();if(socket.destroyed)return;
+    if(request.action==='begin-save'){
+     for(const [key,g] of saves)if(Date.now()-g.at>120000)saves.delete(key);
+     if(saves.size>=128)throw Error('Слишком много подготовленных операций.');
+     const view=await store.readView(),grant=randomUUID();
+     saves.set(grant,{at:Date.now(),operationId:request.operationId,content:request.content,baseRevision:view.revision});
+     io.write({ok:true,value:{operationId:request.operationId,grant,baseRevision:view.revision}});socket.end();return;
+    }
+    if(request.action==='operation'){io.write({ok:true,value:await store.getOperation(request.operationId)});socket.end();return;}
+    if(request.action==='save'){
+     const {grant,...input}=request,previous=await store.getOperation(input.operationId),g=saves.get(grant);
+     // Durable receipt lookup precedes volatile grant checks, including after host restart.
+     const known=previous.state!=='unknown';
+     const allowed=g&&Date.now()-g.at<=120000&&g.operationId===input.operationId&&g.content===input.content&&g.baseRevision===input.expectedStoreRevision;
+     const value=known||allowed?await store.saveExplicit(input,aborted.signal):receipt(input.operationId,'denied','Разрешение на конкретную запись отсутствует или устарело. Изменений нет.');
+     if(allowed)saves.delete(grant);
+     if(!socket.destroyed){io.write({ok:true,value});socket.end();}return;
+    }
     if(request.action==='recall'){
      const ranked=rankMemories(await store.listMemories({scope:'global'}),request.query).map(({id,revision,content,pinned,reason})=>({id,revision,content,pinned,reason}));
      let bytes=0;const records=ranked.filter(r=>{const size=Buffer.byteLength(JSON.stringify(r))+1;if(bytes+size>256000)return false;bytes+=size;return true;});

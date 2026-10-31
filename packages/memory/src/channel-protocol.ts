@@ -1,6 +1,8 @@
 import {createHmac,timingSafeEqual} from 'node:crypto';
 import type {Socket} from 'node:net';
 import {z} from 'zod';
+import {explicitSaveSchema} from './operations.js';
+export const saveGrantSchema=z.object({operationId:z.string().uuid(),grant:z.string().uuid(),baseRevision:z.number().int().nonnegative()}).strict();
 export const descriptorSchema=z.object({version:z.literal(1),pipe:z.string().regex(/^\\\\\.\\pipe\\companion-memory-[a-f0-9]{32}$/),secret:z.string().regex(/^[a-f0-9]{64}$/)}).strict();
 export type Descriptor=z.infer<typeof descriptorSchema>;
 export const candidateSchema=z.object({id:z.string().uuid(),revision:z.number().int().positive(),content:z.string().max(16000),pinned:z.boolean(),reason:z.string().max(100)}).strict();
@@ -9,6 +11,9 @@ export const requestSchema=z.discriminatedUnion('action',[
  z.object({action:z.literal('recall'),query:z.string().max(4096)}).strict(),
  z.object({action:z.literal('usage'),grant:z.string().uuid(),refs:z.array(refSchema).max(5)}).strict(),
  z.object({action:z.literal('capture'),text:z.string().max(4096),mode:z.enum(['explicit','suggest'])}).strict(),
+ z.object({action:z.literal('begin-save'),operationId:z.string().uuid(),content:z.string().trim().min(1).max(16000)}).strict(),
+ explicitSaveSchema.extend({grant:z.string().uuid()}),
+ z.object({action:z.literal('operation'),operationId:z.string().uuid()}).strict(),
 ]);
 export const captureReplySchema=z.object({state:z.enum(['pending','ignored','blocked','duplicate','unresolved','limit']),message:z.string().max(1000),proposalId:z.string().uuid().optional()}).strict();
 export const sign=(secret:string,text:string)=>createHmac('sha256',secret).update(text).digest('hex');
