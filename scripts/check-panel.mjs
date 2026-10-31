@@ -29,7 +29,8 @@ try {
   await page.getByRole('button', { name: 'Память', exact: true }).click();
   await page.getByRole('heading', { name: 'Память', exact: true }).waitFor();
   await page.getByRole('button',{name:'Добавить запись',exact:true}).waitFor();
-  assert.match(await page.locator('main').innerText(), /Подстановка в чат включается отдельно/i);
+  assert.match(await page.locator('main').innerText(), /Память в чате/i);
+  assert.doesNotMatch(await page.locator('main').innerText(), /Прежняя память плагина не переносится автоматически/i);
   await page.getByRole('button', { name: 'Обзор', exact: true }).click();
   state.slow = true;
   await page.getByRole('button', { name: 'Проверить подключение', exact: true }).click();
