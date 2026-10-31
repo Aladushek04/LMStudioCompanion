@@ -19,7 +19,7 @@ async function fixture(decision=save,messages=[{role:'user' as const,content:'С
  const abort=new AbortController(),texts:string[]=[],statuses:any[]=[],configs:Record<string,unknown>={memoryEnabled:true,memoryLinkFile:channel.status().file};
  const source={trainedForToolUse:true,identifier:'same-synthetic-model',countTokens:async(text:string)=>Math.ceil(text.length/3),getContextLength:async()=>32000,applyPromptTemplate:async(chat:Chat)=>chat.getMessagesArray().map(m=>m.getText()).join('\n'),respond:vi.fn(()=>Object.assign(Promise.resolve({content:JSON.stringify(decision),reasoningContent:''}),{cancel:async()=>{}})),act:vi.fn(async(_view:any,tools:any[],opts:any)=>{
    opts.onPredictionFragment?.({content:'Я запомнил всё навсегда!',reasoningType:'none'});
-   const result=await tools[0].implementation({content:decision.content},{signal:opts.signal,callId:1});
+ const result=await tools[0].implementation({content:JSON.parse(_view.getMessagesArray().at(-1).getText()).content},{signal:opts.signal,callId:1});
    opts.onPredictionFragment?.({content:'Сохранено!',reasoningType:'none'});return result;
  })};
  const turn={id:'synthetic-turn',signal:abort.signal,history:Chat.from(messages),source,tools:[]} as unknown as CoreTurn;
@@ -81,6 +81,10 @@ it('Stop before tool invocation leaves memory untouched',async()=>{
 it('equivalent existing text reports the real saved edition without a second record',async()=>{
  const f=await fixture();await (await f.owner.get()).saveMemory({identityKey:'manual.equivalent',content:'учебная метка  ЛИСТ-731',scope:'global',projectId:null,sessionId:null,source:'user'});
  await handleMemoryTurn(f.ctl,f.turn);expect(await (await f.owner.get()).listMemories()).toHaveLength(1);expect(f.texts.join('')).toContain('дубликат не создан');expect(f.texts.join('')).toContain('учебная метка  ЛИСТ-731');
+});
+it('surrounding whitespace uses the canonical stored content for receipt verification',async()=>{
+ const f=await fixture({...save,content:' Учебная метка ЛИСТ-731 '},[{role:'user',content:'Сохрани на будущее:  Учебная метка ЛИСТ-731  '}]);
+ await handleMemoryTurn(f.ctl,f.turn);const records=await (await f.owner.get()).listMemories();expect(records.map(r=>r.content)).toEqual(['Учебная метка ЛИСТ-731']);expect(f.texts.join('')).toContain(records[0]!.id);expect(f.texts.join('')).not.toContain('неизвестен');
 });
 it('manual mutation while LLM interprets the request wins over the late extracted note',async()=>{
  const f=await fixture();const previous=f.source.respond.getMockImplementation()!;

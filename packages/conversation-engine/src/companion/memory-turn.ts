@@ -6,7 +6,7 @@ import {memoryRequest} from '../../../lmstudio-plugin/src/memory/client.js';
 import {configSchematics} from '../config';
 import {prepareMemorySave,memoryOutcomeText} from './memory-tools';
 
-const decisionSchema=z.object({intent:z.enum(['none','save','clarify','unsupported']),kind:z.enum(['fact','note','character','other']),authorization:z.string().max(4000),content:z.string().max(16000),sourceIndex:z.number().int(),question:z.string().max(500)}).strict();
+const decisionSchema=z.object({intent:z.enum(['none','save','clarify','unsupported']),kind:z.enum(['fact','note','character','other']),authorization:z.string().max(4000),content:z.string().trim().max(16000),sourceIndex:z.number().int(),question:z.string().max(500)}).strict();
 const decisionJson={type:'object',properties:{intent:{type:'string',enum:['none','save','clarify','unsupported']},kind:{type:'string',enum:['fact','note','character','other']},authorization:{type:'string'},content:{type:'string'},sourceIndex:{type:'integer'},question:{type:'string'}},required:['intent','kind','authorization','content','sourceIndex','question'],additionalProperties:false};
 const policy=`Ты выполняешь только разбор намерения для Companion. Никаких действий и обещаний сохранения.
 Верни JSON по схеме. intent=save только если ПОСЛЕДНЕЕ текущее сообщение пользователя прямо просит сохранить общую заметку/факт. Пойми обычный язык, не требуй специальной команды или пунктуации. authorization — дословный фрагмент прямой текущей просьбы, вне цитат и исходного материала.
