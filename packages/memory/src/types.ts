@@ -1,4 +1,5 @@
 import {z} from 'zod';
+import {storedOperationSchema} from './operations.js';
 export type JsonValue = null|boolean|number|string|JsonValue[]|{[key:string]:JsonValue};
 const json: z.ZodType<JsonValue> = z.lazy(()=>z.union([z.null(),z.boolean(),z.number().finite(),z.string(),z.array(json),z.record(json)]));
 const text=z.string().trim().min(1);
@@ -29,7 +30,8 @@ export type MemoryPatch=z.infer<typeof memoryPatchSchema>;
 export const filterSchema=z.object({scope:z.enum(['global','project','session']).optional(),projectId:text.max(200).optional(),sessionId:text.max(200).optional(),query:z.string().max(500).optional()}).strict();
 export type MemoryFilter=z.infer<typeof filterSchema>;
 export const identity=(r:Pick<MemoryRecord,'scope'|'projectId'|'sessionId'|'identityKey'>)=>JSON.stringify([r.scope,r.projectId,r.sessionId,r.identityKey]);
-export const snapshotSchema=z.object({format:z.literal('companion-memory-v1'),storeId:z.string().uuid(),revision:z.number().int().nonnegative(),records:z.array(memoryRecordSchema).max(10000)}).strict().superRefine((s,ctx)=>{
+export const snapshotSchema=z.object({format:z.literal('companion-memory-v1'),storeId:z.string().uuid(),revision:z.number().int().nonnegative(),records:z.array(memoryRecordSchema).max(10000),operations:z.array(storedOperationSchema).max(2048).optional()}).strict().superRefine((s,ctx)=>{
+  if(new Set(s.operations?.map(o=>o.operationId)).size!==(s.operations?.length??0))ctx.addIssue({code:'custom',message:'Дубликат операции памяти.'});
   const ids=new Set<string>(),keys=new Set<string>();
   for(const r of s.records){const key=identity(r);if(r.scope==='session'||ids.has(r.id)||keys.has(key))ctx.addIssue({code:'custom',message:'Некорректная постоянная запись или дубликат.'});ids.add(r.id);keys.add(key);}
 });

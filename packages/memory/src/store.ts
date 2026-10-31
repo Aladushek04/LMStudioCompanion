@@ -1,4 +1,5 @@
-import {randomUUID} from 'node:crypto';
+import {randomUUID,createHash} from 'node:crypto';
+import {explicitSaveSchema,receipt,type ExplicitSave,type MemoryReceipt,type StoredOperation} from './operations.js';
 import {join} from 'node:path';
 import {readdir} from 'node:fs/promises';
 import type {OperationResult} from '../../core/src/contracts.js';
@@ -24,12 +25,40 @@ export class MemoryStore {
     const pending=this.tail.then(async()=>{try{return await run();}catch{return failure('WRITE_FAILED','Изменение памяти не сохранено. Прежнее состояние оставлено без изменений.');}});
     this.tail=pending.then(()=>undefined,()=>undefined);return pending;
   }
-  private async commit(next:Map<string,MemoryRecord>,persistent:boolean,signal?:AbortSignal):Promise<void>{
+  private async commit(next:Map<string,MemoryRecord>,persistent:boolean,signal?:AbortSignal,operation?:StoredOperation):Promise<void>{
     if(next.size>10000)throw new Error('Лимит записей.');
-    if(persistent){const snapshot:Snapshot={...this.snapshot,revision:this.snapshot.revision+1,records:[...next.values()].filter(r=>r.scope!=='session')};await writeSnapshot(this.directory,snapshot,async()=>{await this.options.beforeCommit?.();signal?.throwIfAborted();});this.snapshot=snapshot;}
+    if(persistent){const snapshot:Snapshot={...this.snapshot,revision:this.snapshot.revision+1,records:[...next.values()].filter(r=>r.scope!=='session'),...(operation?{operations:[...(this.snapshot.operations??[]),operation]}:{})};await writeSnapshot(this.directory,snapshot,async()=>{await this.options.beforeCommit?.();signal?.throwIfAborted();});this.snapshot=snapshot;}
     this.records=next;
   }
   getRevision():number{return this.snapshot.revision;}
+  private operationResult(operation:StoredOperation):MemoryReceipt{
+    const r=this.records.get(operation.recordId);
+    if(!r||r.deletedAt!==null||r.revision!==operation.recordRevision)return receipt(operation.operationId,'conflict','Запись этой операции уже изменена или забыта. Повтор не восстанавливает прежнюю редакцию.');
+    return {action:'save',operationId:operation.operationId,state:operation.state,record:{id:r.id,revision:r.revision,content:r.content},message:operation.state==='saved'?'Запись сохранена в общей памяти.':'Такая запись уже есть в общей памяти. Дубликат не создан.'};
+  }
+  async getOperation(operationId:string):Promise<MemoryReceipt>{
+    await this.tail;if(!this.accepting)throw Error('Хранилище памяти закрыто.');
+    const op=this.snapshot.operations?.find(o=>o.operationId===operationId);
+    return op?structuredClone(this.operationResult(op)):receipt(operationId,'unknown','Результат операции не подтверждён. Проверьте панель перед повтором.');
+  }
+  async saveExplicit(raw:ExplicitSave,signal?:AbortSignal):Promise<MemoryReceipt>{
+    const input=explicitSaveSchema.parse(raw),signature=createHash('sha256').update(JSON.stringify(input)).digest('hex');
+    const result=await this.enqueue<MemoryReceipt>(async()=>{
+      const old=this.snapshot.operations?.find(o=>o.operationId===input.operationId);
+      if(old)return success(old.signature===signature?this.operationResult(old):receipt(input.operationId,'conflict','ID операции уже использован с другими аргументами. Изменений нет.'));
+      if(signal?.aborted)return success(receipt(input.operationId,'cancelled','Сохранение отменено до записи.'));
+      if(input.expectedStoreRevision!==this.snapshot.revision)return success(receipt(input.operationId,'conflict','Память изменилась после подготовки. Сохранение не выполнено; уточните актуальный текст.'));
+      if((this.snapshot.operations?.length??0)>=2048)return success(receipt(input.operationId,'limit','Журнал операций заполнен. Используйте панель; повторная запись не выполнена.'));
+      const normalized=(text:string)=>text.normalize('NFKC').trim().replace(/\s+/g,' ').toLocaleLowerCase('ru');
+      const duplicate=[...this.records.values()].find(r=>r.scope==='global'&&r.deletedAt===null&&normalized(r.content)===normalized(input.content));
+      const now=Date.now(),record=duplicate??memoryRecordSchema.parse({...memoryInputSchema.parse({identityKey:'core.'+input.operationId,content:input.content,scope:'global',projectId:null,sessionId:null,source:'chat-explicit'}),id:randomUUID(),createdAt:now,updatedAt:now,revision:1,manualPriority:true,deletedAt:null,lastAccessedAt:0,accessCount:0});
+      const next=new Map(this.records);next.set(record.id,record);
+      const operation:StoredOperation={operationId:input.operationId,signature,state:duplicate?'duplicate':'saved',recordId:record.id,recordRevision:record.revision};
+      await this.commit(next,true,signal,operation);
+      return success(this.operationResult(operation));
+    });
+    return result.ok?result.value:receipt(input.operationId,signal?.aborted?'cancelled':'failed',signal?.aborted?'Сохранение отменено до записи.':result.message);
+  }
   private migrationMarker():{id:string;beforeRevision:number}|undefined{let latest:{id:string;beforeRevision:number}|undefined;for(const r of this.records.values()){const m=r.metadata._companionMigration;if(m&&typeof m==='object'&&!Array.isArray(m)&&typeof m.id==='string'&&/^[a-f0-9-]{36}$/.test(m.id)&&typeof m.beforeRevision==='number'&&Number.isSafeInteger(m.beforeRevision)&&(!latest||m.beforeRevision>latest.beforeRevision))latest={id:m.id,beforeRevision:m.beforeRevision};}return latest;}
   async migrationState(){await this.tail;if(!this.accepting)throw Error('Хранилище памяти закрыто.');const m=this.migrationMarker();return {revision:this.snapshot.revision,known:[...this.records.values()].map(({id,identityKey})=>({id,identityKey})),undo:m&&m.beforeRevision+1===this.snapshot.revision?{id:m.id,revision:this.snapshot.revision}:null};}
   importRecords(records:MemoryRecord[],expectedRevision:number,signal?:AbortSignal):Promise<OperationResult<{imported:number;skipped:number;revision:number;backupId:string|null}>>{
