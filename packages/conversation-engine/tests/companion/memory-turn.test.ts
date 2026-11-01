@@ -12,12 +12,16 @@ const cleanup:(()=>Promise<unknown>)[]=[];
 afterEach(async()=>{for(const c of cleanup.reverse())await c();cleanup.length=0;});
 type Decision={intent:string;kind:string;authorization:string;content:string;sourceIndex:number;question:string};
 const save:Decision={intent:'save',kind:'note',authorization:'Сохрани на будущее',content:'Учебная метка ЛИСТ-731',sourceIndex:0,question:''};
-async function fixture(decision=save,messages=[{role:'user' as const,content:'Сохрани на будущее: Учебная метка ЛИСТ-731'}],fail=false){
+const reply=(value:unknown)=>Object.assign(Promise.resolve({content:JSON.stringify(value),reasoningContent:''}),{cancel:async()=>{}});
+const stageDecision=(decision:Decision,args:any[])=>args[1]?.structured?.jsonSchema?.properties?.sourceIndex
+ ?{intent:decision.intent,kind:decision.kind,content:decision.content,sourceIndex:decision.sourceIndex,question:decision.question}
+ :{intent:decision.intent==='clarify'?'save':decision.intent,authorization:decision.intent==='none'?'':decision.authorization};
+async function fixture(decision=save,messages:{role:'user'|'assistant';content:string}[]=[{role:'user',content:'Сохрани на будущее: Учебная метка ЛИСТ-731'}],fail=false){
  const directory=await mkdtemp(join(tmpdir(),'companion-core2-turn-'));cleanup.push(()=>rm(directory,{recursive:true,force:true}));let armed=false;
  const owner=createMemoryRoutes(join(directory,'memory'),{beforeCommit:async()=>{if(armed&&fail)throw Error('synthetic disk error');}});cleanup.push(()=>owner.close());await owner.get();armed=true;
  const channel=createMemoryChannel(join(directory,'link'),owner.get,owner.proposals);cleanup.push(()=>channel.close());await channel.enable();
  const abort=new AbortController(),texts:string[]=[],statuses:any[]=[],configs:Record<string,unknown>={memoryEnabled:true,memoryLinkFile:channel.status().file};
- const source={trainedForToolUse:true,identifier:'same-synthetic-model',countTokens:async(text:string)=>Math.ceil(text.length/3),getContextLength:async()=>32000,applyPromptTemplate:async(chat:Chat)=>chat.getMessagesArray().map(m=>m.getText()).join('\n'),respond:vi.fn(()=>Object.assign(Promise.resolve({content:JSON.stringify(decision),reasoningContent:''}),{cancel:async()=>{}})),act:vi.fn(async(_view:any,tools:any[],opts:any)=>{
+ const source={trainedForToolUse:true,identifier:'same-synthetic-model',countTokens:async(text:string)=>Math.ceil(text.length/3),getContextLength:async()=>32000,applyPromptTemplate:async(chat:Chat)=>chat.getMessagesArray().map(m=>m.getText()).join('\n'),respond:vi.fn((...args:any[])=>reply(stageDecision(decision,args))),act:vi.fn(async(_view:any,tools:any[],opts:any)=>{
    opts.onPredictionFragment?.({content:'Я запомнил всё навсегда!',reasoningType:'none'});
  const result=await tools[0].implementation({content:JSON.parse(_view.getMessagesArray().at(-1).getText()).content},{signal:opts.signal,callId:1});
    opts.onPredictionFragment?.({content:'Сохранено!',reasoningType:'none'});return result;
@@ -31,9 +35,29 @@ it('current LLM tool saves immediately and deterministic confirmation matches pa
  const records=await (await f.owner.get()).listMemories();expect(records.map(r=>r.content)).toEqual(['Учебная метка ЛИСТ-731']);
  expect(f.owner.proposals.list()).toEqual([]);expect(f.texts.join('')).toContain(records[0]!.id);expect(f.texts.join('')).toContain('Учебная метка ЛИСТ-731');expect(f.texts.join('')).not.toContain('навсегда');
 });
+it.each(['Учебная заметка: цвет тестового маяка — синий.','Цвет тестового маяка — синий.','Новая информация: цвет тестового маяка — синий.'])('an ordinary statement cannot inherit save permission from history: %s',async text=>{
+ const f=await fixture({...save,authorization:text.split(':')[0]!,content:'цвет тестового маяка — синий',sourceIndex:2},[{role:'user',content:'Сохрани на будущее: прежняя метка СТАРЫЙ-731'},{role:'assistant',content:'Сохранено: СТАРЫЙ-731'},{role:'user',content:text}]);
+ const contextDecision={...save,authorization:text.split(':')[0]!,content:text,sourceIndex:2};
+ const authorityInputs:string[]=[];
+ f.source.respond.mockImplementation((...args:any[])=>{
+  if(args[1]?.structured?.jsonSchema?.properties?.sourceIndex)return reply(contextDecision);
+  const input=args[0].getMessagesArray().at(-1).getText();authorityInputs.push(input);
+  return reply({intent:input.includes('СТАРЫЙ-731')?'save':'none',authorization:input.includes('СТАРЫЙ-731')?text:''});
+ });
+ expect(await handleMemoryTurn(f.ctl,f.turn)).toBe(false);
+ expect(await (await f.owner.get()).listMemories()).toEqual([]);
+ expect(authorityInputs).toHaveLength(1);expect(authorityInputs[0]).not.toContain('СТАРЫЙ-731');expect(authorityInputs[0]).toContain(text);
+});
+it('a failed current-only authority check cannot be bypassed by a context extraction result',async()=>{
+ const f=await fixture();f.source.respond.mockImplementation((...args:any[])=>{
+  if(args[1]?.structured?.jsonSchema?.properties?.sourceIndex)return reply(save);
+  throw Error('synthetic authority failure');
+ });
+ await handleMemoryTurn(f.ctl,f.turn);expect(await (await f.owner.get()).listMemories()).toEqual([]);expect(f.texts.join('')).toContain('не выполнено');
+});
 it('native SDK reasoning in content does not invalidate a valid non-reasoning decision',async()=>{
- const f=await fixture(),final=JSON.stringify(save);
- f.source.respond.mockImplementation(()=>Object.assign(Promise.resolve({content:'synthetic reasoning __LM_STUDIO_INTERNAL_LSEP_SYNTHETIC_REASONING_END_ab12__'+final,reasoningContent:'synthetic reasoning',nonReasoningContent:final}),{cancel:async()=>{}}));
+ const f=await fixture();
+ f.source.respond.mockImplementation((...args:any[])=>{const final=JSON.stringify(stageDecision(save,args));return Object.assign(Promise.resolve({content:'synthetic reasoning __LM_STUDIO_INTERNAL_LSEP_SYNTHETIC_REASONING_END_ab12__'+final,reasoningContent:'synthetic reasoning',nonReasoningContent:final}),{cancel:async()=>{}});});
  await handleMemoryTurn(f.ctl,f.turn);const records=await (await f.owner.get()).listMemories();expect(records.map(r=>r.content)).toEqual(['Учебная метка ЛИСТ-731']);expect(f.texts.join('')).toContain(records[0]!.id);
 });
 it('reasoning alone cannot supply a save decision when the final field is empty',async()=>{
@@ -102,8 +126,8 @@ it('surrounding whitespace uses the canonical stored content for receipt verific
 it('manual mutation while LLM interprets the request wins over the late extracted note',async()=>{
  const f=await fixture();const previous=f.source.respond.getMockImplementation()!;
  let headRead!:()=>void;const ready=new Promise<void>(resolve=>{headRead=resolve;});
- f.source.respond.mockImplementation(()=>{
-  const operation=(async()=>{await ready;await (await f.owner.get()).saveMemory({identityKey:'manual.during',content:'Ручная правка',scope:'global',projectId:null,sessionId:null,source:'user'});return await previous();})();
+ f.source.respond.mockImplementation((...args:any[])=>{
+  const operation=(async()=>{await ready;await (await f.owner.get()).saveMemory({identityKey:'manual.during',content:'Ручная правка',scope:'global',projectId:null,sessionId:null,source:'user'});return await previous(...args);})();
   return Object.assign(operation,{cancel:async()=>{}});
  });
  await handleMemoryTurn(f.ctl,f.turn,async(file,input,signal)=>{const value=await memoryRequest(file,input,signal);if(input.action==='memory-state')headRead();return value;});expect((await (await f.owner.get()).listMemories()).map(r=>r.content)).toEqual(['Ручная правка']);expect(f.texts.join('')).toContain('изменилась');

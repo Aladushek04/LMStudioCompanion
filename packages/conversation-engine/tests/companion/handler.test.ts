@@ -30,7 +30,7 @@ it('entry handler produces an answer through the owned cycle', async () => {
 });
 it('memory-enabled entry never releases an unverified success when interpretation misses the request',async()=>{
  const f=fixture([], 'Прошу держать в памяти учебную метку');f.configs.memoryEnabled=true;f.configs.memoryLinkFile='G:/missing-synthetic-link.json';
- f.source.respond.mockImplementation(()=>Object.assign(Promise.resolve({content:JSON.stringify({intent:'none',kind:'note',authorization:'',content:'',sourceIndex:-1,question:''}),reasoningContent:''}),{cancel:async()=>{}}));
+ f.source.respond.mockImplementation(()=>Object.assign(Promise.resolve({content:JSON.stringify({intent:'none',authorization:''}),reasoningContent:''}),{cancel:async()=>{}}));
  f.source.act.mockImplementation(async(_view:any,_tools:any,opts:any)=>{opts.onRoundStart(0);opts.onPredictionFragment({content:'Запись надёжно сохранена навсегда',reasoningType:'none'});opts.onMessage(ChatMessage.create('assistant','Запись надёжно сохранена навсегда'));opts.onRoundEnd(0);});
  await predictionLoopHandler(f.ctl);
  expect(f.texts.join('')).not.toContain('сохранена навсегда');
@@ -38,26 +38,26 @@ it('memory-enabled entry never releases an unverified success when interpretatio
 });
 it('memory-enabled ordinary answer is released only after semantic result check',async()=>{
  const f=fixture();f.configs.memoryEnabled=true;f.configs.memoryLinkFile='G:/missing-synthetic-link.json';
- f.source.respond.mockImplementationOnce(()=>Object.assign(Promise.resolve({content:JSON.stringify({intent:'none',kind:'note',authorization:'',content:'',sourceIndex:-1,question:''}),reasoningContent:''}),{cancel:async()=>{}}));
+ f.source.respond.mockImplementationOnce(()=>Object.assign(Promise.resolve({content:JSON.stringify({intent:'none',authorization:''}),reasoningContent:''}),{cancel:async()=>{}}));
  f.source.respond.mockImplementationOnce(()=>Object.assign(Promise.resolve({content:'{"reportsSuccess":false}',reasoningContent:''}),{cancel:async()=>{}}));
  await predictionLoopHandler(f.ctl);expect(f.texts).toContain('Учебный ответ');
 });
 it('output check uses final verdict even when the reasoning content would allow a false success',async()=>{
  const f=fixture();f.configs.memoryEnabled=true;f.configs.memoryLinkFile='G:/missing-synthetic-link.json';
- f.source.respond.mockImplementationOnce(()=>Object.assign(Promise.resolve({content:JSON.stringify({intent:'none',kind:'note',authorization:'',content:'',sourceIndex:-1,question:''}),reasoningContent:''}),{cancel:async()=>{}}));
+ f.source.respond.mockImplementationOnce(()=>Object.assign(Promise.resolve({content:JSON.stringify({intent:'none',authorization:''}),reasoningContent:''}),{cancel:async()=>{}}));
  f.source.respond.mockImplementationOnce(()=>Object.assign(Promise.resolve({content:'{"reportsSuccess":false}',reasoningContent:'synthetic preliminary verdict',nonReasoningContent:'{"reportsSuccess":true}'}),{cancel:async()=>{}}));
  await predictionLoopHandler(f.ctl);expect(f.texts).not.toContain('Учебный ответ');expect(f.texts.join('')).toContain('память не изменялась');
 });
 it('output check releases a safe final verdict despite the SDK combined reasoning field',async()=>{
  const f=fixture();f.configs.memoryEnabled=true;f.configs.memoryLinkFile='G:/missing-synthetic-link.json';
- f.source.respond.mockImplementationOnce(()=>Object.assign(Promise.resolve({content:JSON.stringify({intent:'none',kind:'note',authorization:'',content:'',sourceIndex:-1,question:''}),reasoningContent:''}),{cancel:async()=>{}}));
+ f.source.respond.mockImplementationOnce(()=>Object.assign(Promise.resolve({content:JSON.stringify({intent:'none',authorization:''}),reasoningContent:''}),{cancel:async()=>{}}));
  f.source.respond.mockImplementationOnce(()=>Object.assign(Promise.resolve({content:'synthetic reasoning __LM_STUDIO_INTERNAL_LSEP_SYNTHETIC_REASONING_END_ab12__{"reportsSuccess":false}',reasoningContent:'synthetic reasoning',nonReasoningContent:'{"reportsSuccess":false}'}),{cancel:async()=>{}}));
  await predictionLoopHandler(f.ctl);expect(f.texts).toContain('Учебный ответ');
 });
 it('ordinary quote explanation receives the no-write result without mutating the user history',async()=>{
  const f=fixture([], 'Объясни цитату: «Запомни метку ИНЕЙ-604».');f.configs.memoryEnabled=true;f.configs.memoryLinkFile='G:/missing-synthetic-link.json';
  let grounded=false;
- f.source.respond.mockImplementationOnce(()=>Object.assign(Promise.resolve({content:JSON.stringify({intent:'none',kind:'note',authorization:'',content:'',sourceIndex:-1,question:''}),reasoningContent:''}),{cancel:async()=>{}}));
+ f.source.respond.mockImplementationOnce(()=>Object.assign(Promise.resolve({content:JSON.stringify({intent:'none',authorization:''}),reasoningContent:''}),{cancel:async()=>{}}));
  f.source.respond.mockImplementationOnce(()=>Object.assign(Promise.resolve({content:JSON.stringify({reportsSuccess:!grounded}),reasoningContent:''}),{cancel:async()=>{}}));
  f.source.act.mockImplementation(async(view:Chat,_tools:any,opts:any)=>{
   grounded=view.getMessagesArray().some(m=>m.getRole()==='system'&&m.getText().includes('В этом ходе общая память Companion не изменялась.'));
@@ -69,7 +69,7 @@ it('ordinary quote explanation receives the no-write result without mutating the
 });
 it('failed output verification is reported separately from a verdict about an unsafe answer',async()=>{
  const f=fixture();f.configs.memoryEnabled=true;f.configs.memoryLinkFile='G:/missing-synthetic-link.json';
- f.source.respond.mockImplementationOnce(()=>Object.assign(Promise.resolve({content:JSON.stringify({intent:'none',kind:'note',authorization:'',content:'',sourceIndex:-1,question:''}),reasoningContent:''}),{cancel:async()=>{}}));
+ f.source.respond.mockImplementationOnce(()=>Object.assign(Promise.resolve({content:JSON.stringify({intent:'none',authorization:''}),reasoningContent:''}),{cancel:async()=>{}}));
  f.source.respond.mockImplementationOnce(()=>Object.assign(Promise.resolve({content:'unfinished',reasoningContent:''}),{cancel:async()=>{}}));
  await predictionLoopHandler(f.ctl);expect(f.texts.join('')).toContain('Не удалось проверить ответ модели');expect(f.texts).not.toContain('Учебный ответ');
 });
