@@ -31,6 +31,19 @@ it('current LLM tool saves immediately and deterministic confirmation matches pa
  const records=await (await f.owner.get()).listMemories();expect(records.map(r=>r.content)).toEqual(['Учебная метка ЛИСТ-731']);
  expect(f.owner.proposals.list()).toEqual([]);expect(f.texts.join('')).toContain(records[0]!.id);expect(f.texts.join('')).toContain('Учебная метка ЛИСТ-731');expect(f.texts.join('')).not.toContain('навсегда');
 });
+it('native SDK reasoning in content does not invalidate a valid non-reasoning decision',async()=>{
+ const f=await fixture(),final=JSON.stringify(save);
+ f.source.respond.mockImplementation(()=>Object.assign(Promise.resolve({content:'synthetic reasoning __LM_STUDIO_INTERNAL_LSEP_SYNTHETIC_REASONING_END_ab12__'+final,reasoningContent:'synthetic reasoning',nonReasoningContent:final}),{cancel:async()=>{}}));
+ await handleMemoryTurn(f.ctl,f.turn);const records=await (await f.owner.get()).listMemories();expect(records.map(r=>r.content)).toEqual(['Учебная метка ЛИСТ-731']);expect(f.texts.join('')).toContain(records[0]!.id);
+});
+it('reasoning alone cannot supply a save decision when the final field is empty',async()=>{
+ const f=await fixture();f.source.respond.mockImplementation(()=>Object.assign(Promise.resolve({content:JSON.stringify(save),reasoningContent:JSON.stringify(save),nonReasoningContent:''}),{cancel:async()=>{}}));
+ await handleMemoryTurn(f.ctl,f.turn);expect(await (await f.owner.get()).listMemories()).toEqual([]);expect(f.texts.join('')).toContain('не выполнено');
+});
+it('invalid final decision identifies model parsing rather than blaming the panel connection',async()=>{
+ const f=await fixture();f.source.respond.mockImplementation(()=>Object.assign(Promise.resolve({content:'invalid final',reasoningContent:''}),{cancel:async()=>{}}));
+ await handleMemoryTurn(f.ctl,f.turn);expect(f.texts.join('')).toContain('итоговый JSON');expect(f.texts.join('')).not.toContain('подключиться к владельцу');
+});
 it('ordinary reference resolves to an exact available earlier note',async()=>{
  const f=await fixture({...save,authorization:'Держи это в памяти',sourceIndex:0},[{role:'user',content:'Учебная метка ЛИСТ-731'},{role:'user',content:'Держи это в памяти'}]);
  await handleMemoryTurn(f.ctl,f.turn);expect((await (await f.owner.get()).listMemories())[0]?.content).toBe('Учебная метка ЛИСТ-731');

@@ -3,6 +3,7 @@ import {z} from 'zod';
 import type {CoreTurn} from './turn';
 import {waitForCoreStep} from './turn';
 import {configSchematics} from '../config';
+import {extractPayload} from '../reasoning';
 
 /** A missed intent must not let the ordinary model stream claim an unexecuted save. */
 export async function guardMemoryOutput(ctl:PredictionLoopHandlerController,turn:CoreTurn,run:(guarded:PredictionLoopHandlerController)=>Promise<void>):Promise<void>{
@@ -37,7 +38,7 @@ export async function guardMemoryOutput(ctl:PredictionLoopHandlerController,turn
   const prediction=turn.source.respond(prompt,{maxTokens:2000,structured:{type:'json',jsonSchema:{type:'object',properties:{reportsSuccess:{type:'boolean'}},required:['reportsSuccess'],additionalProperties:false}},contextOverflowPolicy:'stopAtLimit'});
   ctl.onAborted(()=>void prediction.cancel());
   const result=await waitForCoreStep(Promise.resolve(prediction),turn.signal);
-  safe=!z.object({reportsSuccess:z.boolean()}).strict().parse(JSON.parse(result.content)).reportsSuccess;
+  safe=!z.object({reportsSuccess:z.boolean()}).strict().parse(JSON.parse(extractPayload(result))).reportsSuccess;
  }catch{turn.signal.throwIfAborted();}
  turn.signal.throwIfAborted();
  if(safe){for(const item of pending)item.flush();status.setState({status:'done',text:'Companion: в этом ходе память не изменялась.'});}

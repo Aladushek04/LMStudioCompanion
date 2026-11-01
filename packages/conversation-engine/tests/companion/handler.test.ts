@@ -42,6 +42,18 @@ it('memory-enabled ordinary answer is released only after semantic result check'
  f.source.respond.mockImplementationOnce(()=>Object.assign(Promise.resolve({content:'{"reportsSuccess":false}',reasoningContent:''}),{cancel:async()=>{}}));
  await predictionLoopHandler(f.ctl);expect(f.texts).toContain('Учебный ответ');
 });
+it('output check uses final verdict even when the reasoning content would allow a false success',async()=>{
+ const f=fixture();f.configs.memoryEnabled=true;f.configs.memoryLinkFile='G:/missing-synthetic-link.json';
+ f.source.respond.mockImplementationOnce(()=>Object.assign(Promise.resolve({content:JSON.stringify({intent:'none',kind:'note',authorization:'',content:'',sourceIndex:-1,question:''}),reasoningContent:''}),{cancel:async()=>{}}));
+ f.source.respond.mockImplementationOnce(()=>Object.assign(Promise.resolve({content:'{"reportsSuccess":false}',reasoningContent:'synthetic preliminary verdict',nonReasoningContent:'{"reportsSuccess":true}'}),{cancel:async()=>{}}));
+ await predictionLoopHandler(f.ctl);expect(f.texts).not.toContain('Учебный ответ');expect(f.texts.join('')).toContain('память не изменялась');
+});
+it('output check releases a safe final verdict despite the SDK combined reasoning field',async()=>{
+ const f=fixture();f.configs.memoryEnabled=true;f.configs.memoryLinkFile='G:/missing-synthetic-link.json';
+ f.source.respond.mockImplementationOnce(()=>Object.assign(Promise.resolve({content:JSON.stringify({intent:'none',kind:'note',authorization:'',content:'',sourceIndex:-1,question:''}),reasoningContent:''}),{cancel:async()=>{}}));
+ f.source.respond.mockImplementationOnce(()=>Object.assign(Promise.resolve({content:'synthetic reasoning __LM_STUDIO_INTERNAL_LSEP_SYNTHETIC_REASONING_END_ab12__{"reportsSuccess":false}',reasoningContent:'synthetic reasoning',nonReasoningContent:'{"reportsSuccess":false}'}),{cancel:async()=>{}}));
+ await predictionLoopHandler(f.ctl);expect(f.texts).toContain('Учебный ответ');
+});
 it('/core identifies the running handler without generating text', async () => {
     const f = fixture([], '/core');
     await predictionLoopHandler(f.ctl);

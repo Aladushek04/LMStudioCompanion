@@ -5,6 +5,7 @@ import {waitForCoreStep} from './turn';
 import {memoryRequest} from '../../../lmstudio-plugin/src/memory/client.js';
 import {configSchematics} from '../config';
 import {prepareMemorySave,memoryOutcomeText} from './memory-tools';
+import {extractPayload} from '../reasoning';
 
 const decisionSchema=z.object({intent:z.enum(['none','save','clarify','unsupported']),kind:z.enum(['fact','note','character','other']),authorization:z.string().max(4000),content:z.string().trim().max(16000),sourceIndex:z.number().int(),question:z.string().max(500)}).strict();
 const decisionJson={type:'object',properties:{intent:{type:'string',enum:['none','save','clarify','unsupported']},kind:{type:'string',enum:['fact','note','character','other']},authorization:{type:'string'},content:{type:'string'},sourceIndex:{type:'integer'},question:{type:'string'}},required:['intent','kind','authorization','content','sourceIndex','question'],additionalProperties:false};
@@ -33,6 +34,7 @@ export async function handleMemoryTurn(ctl:PredictionLoopHandlerController,turn:
  if(turn.source.trainedForToolUse===false)return refuse('Сохранение не выполнено: текущая модель не поддерживает инструменты. Используйте панель «Память».');
  // Capture revision before interpretation; failure need not block an ordinary non-memory answer.
  const initialState=request(cfg.get('memoryLinkFile'),{action:'memory-state'},turn.signal).then(value=>z.object({revision:z.number().int().nonnegative()}).strict().parse(value)).catch(()=>null);
+ let phase:'prepare'|'prediction'|'parse'|'channel'='prepare';
  try{
   const selected:{index:number;role:string;text:string}[]=[];let chars=0;
   for(let i=messages.length-1;i>=0&&selected.length<12;i--){
@@ -47,16 +49,19 @@ export async function handleMemoryTurn(ctl:PredictionLoopHandlerController,turn:
   const prompt=await waitForCoreStep(turn.source.applyPromptTemplate(input),turn.signal);
   const count=await waitForCoreStep(turn.source.countTokens(prompt),turn.signal);
   if(!Number.isFinite(context)||!Number.isFinite(count)||count<0||maxTokens<1000||count+maxTokens+1024>context)return refuse('Сохранение не выполнено: недостаточно контекста для надёжного разбора. Укажите точный текст отдельным сообщением.');
+  phase='prediction';
   const prediction=turn.source.respond(input,{structured:{type:'json',jsonSchema:decisionJson},maxTokens,contextOverflowPolicy:'stopAtLimit'});
   ctl.onAborted(()=>void prediction.cancel());
   const result=await waitForCoreStep(Promise.resolve(prediction),turn.signal);
-  const decision=decisionSchema.parse(JSON.parse(result.content));
+  phase='parse';
+  const decision=decisionSchema.parse(JSON.parse(extractPayload(result)));
   turn.signal.throwIfAborted();
   if(decision.intent==='none'){state({status:'done',text:'Companion: изменений памяти не запрошено.'});return false;}
   if(decision.kind==='character'||decision.kind==='other'||decision.intent==='unsupported')return refuse('Сохранение не выполнено: CORE-2 поддерживает только новые общие факты и заметки. Карточки, версии, исправление и забывание через модель относятся к CORE-3. Используйте панель для доступных ручных операций.');
   if(decision.intent==='clarify')return refuse('Нужно уточнение; ничего не сохранено. Укажите точный текст заметки отдельным сообщением и подтвердите общую область памяти.');
   const source=selected.find(m=>m.index===decision.sourceIndex);
   if(!decision.authorization.trim()||!last.getText().includes(decision.authorization)||!directText(last.getText()).includes(decision.authorization)||!decision.content.trim()||!source?.text.includes(decision.content))return refuse('Сохранение не выполнено: не удалось проверить прямую просьбу или точное содержание. Укажите заметку отдельным сообщением.');
+  phase='channel';
   const head=await initialState;
   if(!head)return refuse('Сохранение не выполнено: владелец памяти недоступен. Откройте панель и проверьте файл подключения.');
   const prepared=await prepareMemorySave(cfg.get('memoryLinkFile'),decision.content,head.revision,turn.signal,request);
@@ -69,6 +74,13 @@ export async function handleMemoryTurn(ctl:PredictionLoopHandlerController,turn:
   state({status:receipt.state==='saved'||receipt.state==='duplicate'?'done':'error',text:receipt.message});
   publish(ctl,memoryOutcomeText(receipt));return true;
  }catch{
-  return refuse(turn.signal.aborted?'Сохранение отменено до отправки.':'Сохранение не выполнено: не удалось проверить просьбу или подключиться к владельцу памяти. Проверьте панель и файл подключения.');
+  if(turn.signal.aborted)return refuse('Сохранение отменено до отправки.');
+  const messages={
+   prepare:'Сохранение не выполнено: не удалось подготовить служебный запрос к текущей модели. Запись не отправлялась.',
+   prediction:'Сохранение не выполнено: текущая модель не завершила служебный разбор просьбы. Запись не отправлялась.',
+   parse:'Сохранение не выполнено: модель не вернула корректный итоговый JSON разбора просьбы. Запись не отправлялась.',
+   channel:'Сохранение не выполнено: не удалось получить разрешение владельца памяти. Проверьте панель и файл подключения.',
+  };
+  return refuse(messages[phase]);
  }
 }
