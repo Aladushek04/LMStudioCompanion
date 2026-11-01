@@ -54,6 +54,25 @@ it('output check releases a safe final verdict despite the SDK combined reasonin
  f.source.respond.mockImplementationOnce(()=>Object.assign(Promise.resolve({content:'synthetic reasoning __LM_STUDIO_INTERNAL_LSEP_SYNTHETIC_REASONING_END_ab12__{"reportsSuccess":false}',reasoningContent:'synthetic reasoning',nonReasoningContent:'{"reportsSuccess":false}'}),{cancel:async()=>{}}));
  await predictionLoopHandler(f.ctl);expect(f.texts).toContain('Учебный ответ');
 });
+it('ordinary quote explanation receives the no-write result without mutating the user history',async()=>{
+ const f=fixture([], 'Объясни цитату: «Запомни метку ИНЕЙ-604».');f.configs.memoryEnabled=true;f.configs.memoryLinkFile='G:/missing-synthetic-link.json';
+ let grounded=false;
+ f.source.respond.mockImplementationOnce(()=>Object.assign(Promise.resolve({content:JSON.stringify({intent:'none',kind:'note',authorization:'',content:'',sourceIndex:-1,question:''}),reasoningContent:''}),{cancel:async()=>{}}));
+ f.source.respond.mockImplementationOnce(()=>Object.assign(Promise.resolve({content:JSON.stringify({reportsSuccess:!grounded}),reasoningContent:''}),{cancel:async()=>{}}));
+ f.source.act.mockImplementation(async(view:Chat,_tools:any,opts:any)=>{
+  grounded=view.getMessagesArray().some(m=>m.getRole()==='system'&&m.getText().includes('В этом ходе общая память Companion не изменялась.'));
+  opts.onRoundStart(0);opts.onPredictionFragment({content:grounded?'Цитата просит сохранить метку; здесь она только объясняется.':'Теперь активны две метки.',reasoningType:'none'});opts.onRoundEnd(0);
+ });
+ await predictionLoopHandler(f.ctl);
+ expect(f.texts).toContain('Цитата просит сохранить метку; здесь она только объясняется.');
+ expect(f.texts.join('')).not.toContain('Теперь активны две метки');expect(f.history.getMessagesArray()).toHaveLength(1);
+});
+it('failed output verification is reported separately from a verdict about an unsafe answer',async()=>{
+ const f=fixture();f.configs.memoryEnabled=true;f.configs.memoryLinkFile='G:/missing-synthetic-link.json';
+ f.source.respond.mockImplementationOnce(()=>Object.assign(Promise.resolve({content:JSON.stringify({intent:'none',kind:'note',authorization:'',content:'',sourceIndex:-1,question:''}),reasoningContent:''}),{cancel:async()=>{}}));
+ f.source.respond.mockImplementationOnce(()=>Object.assign(Promise.resolve({content:'unfinished',reasoningContent:''}),{cancel:async()=>{}}));
+ await predictionLoopHandler(f.ctl);expect(f.texts.join('')).toContain('Не удалось проверить ответ модели');expect(f.texts).not.toContain('Учебный ответ');
+});
 it('/core identifies the running handler without generating text', async () => {
     const f = fixture([], '/core');
     await predictionLoopHandler(f.ctl);

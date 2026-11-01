@@ -436,7 +436,7 @@ function sum(nums: number[], from: number, to: number): number {
 export async function predictionLoopHandler(
   ctl: PredictionLoopHandlerController,
 ): Promise<void> {
-  await runCompanionTurn(ctl,async turn=>{if(await handleMemoryTurn(ctl,turn))return;await guardMemoryOutput(ctl,turn,guarded=>runHandler(guarded,turn));});
+  await runCompanionTurn(ctl,async turn=>{if(await handleMemoryTurn(ctl,turn))return;await guardMemoryOutput(ctl,turn,(guarded,generationTurn)=>runHandler(guarded,generationTurn));});
 }
 
 async function runHandler(ctl: PredictionLoopHandlerController,turn:CoreTurn): Promise<void> {
