@@ -41,7 +41,7 @@
 - `MigrationPreview` вынесен в `packages/memory/src/migration-types.ts`, чтобы панель не импортировала `host`.
 - `docs/CODEMAP.md` описывает входные точки, поток данных, владельцев, правила импортов, форматы модулей и живые данные.
 - `scripts/check-boundaries.mjs` проверяет production-импорты; тесты исключены.
-- Проверено 107 production-файлов; нарушений нет.
+- Проверено 108 production-файлов; нарушений нет.
 
 ### 4. CI
 
@@ -64,14 +64,14 @@
 | Проверка | Результат |
 |---|---|
 | Baseline до изменений | 253/254, один install-тест по таймауту 5 с |
-| `npm test` после изменений | **267/267** |
+| `npm test` после изменений | **275/275** |
 | `npm run test:core` | **424/424** |
 | `npm run verify` | **8/8 шагов, VERIFY PASSED** |
 | `npm run verify:full` | **10/10 шагов, VERIFY:FULL PASSED** |
 | Python pytest | **58 passed, 2 skipped** |
 | Ruff | **All checks passed** |
 | Panel E2E | **PASS** (connected, offline, cancel, 320px, 200% text, keyboard) |
-| Import boundaries | **107 files, 0 violations** |
+| Import boundaries | **108 files, 0 violations** |
 | Biome lint/format | **0 errors** |
 
 ## CI
@@ -124,4 +124,4 @@ npm run check:boundaries
 npm run build
 ```
 
-Ожидаемо: `VERIFY PASSED`, `VERIFY:FULL PASSED`, 267 общих тестов, 424 Core-теста, E2E PASS.
+Ожидаемо: `VERIFY PASSED`, `VERIFY:FULL PASSED`, 275 общих тестов, 424 Core-теста, E2E PASS.

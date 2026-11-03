@@ -91,7 +91,7 @@ try {
   await writeFile(
     guidePath,
     guide.replace(
-      /\]\(((?:plans|research)\/[^)]+)\)/g,
+      /\]\(((?:plans|research|requirements)\/[^)]+)\)/g,
       // Keep packaged links on the public default branch; a release tag may replace this later.
       '](' + 'https://github.com/Aladushek04/LMStudioCompanion/blob/main/docs/$1)',
     ),

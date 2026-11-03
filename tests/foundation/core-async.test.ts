@@ -18,6 +18,19 @@ it('rejects with the abort reason when the signal aborts', async () => {
   resolve('late');
 });
 
+it('rejects immediately when the signal is already aborted', async () => {
+  const controller = new AbortController();
+  controller.abort(new Error('already stopped'));
+  await expect(abortable(Promise.resolve(1), controller.signal)).rejects.toThrow('already stopped');
+});
+
+it('ignores an abort after the work already resolved', async () => {
+  const controller = new AbortController();
+  await expect(abortable(Promise.resolve('ok'), controller.signal)).resolves.toBe('ok');
+  controller.abort(new Error('late'));
+  expect(controller.signal.aborted).toBe(true);
+});
+
 it('removes its abort listener after work resolves', async () => {
   const listeners = new Set<() => void>();
   const signal = {

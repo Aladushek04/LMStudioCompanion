@@ -38,9 +38,17 @@ export function parseImports(source, fileName = 'file.ts') {
     if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
       const clause = node.importClause;
       let typeOnly = clause?.isTypeOnly === true;
-      if (!typeOnly && clause?.namedBindings && ts.isNamedImports(clause.namedBindings)) {
-        const elements = clause.namedBindings.elements;
-        typeOnly = elements.length > 0 && elements.every(element => element.isTypeOnly);
+      if (!typeOnly && clause?.name) {
+        typeOnly = false;
+      } else if (!typeOnly && clause?.namedBindings) {
+        if (ts.isNamespaceImport(clause.namedBindings)) {
+          typeOnly = false;
+        } else {
+          const elements = clause.namedBindings.elements;
+          typeOnly = elements.length > 0 && elements.every(element => element.isTypeOnly);
+        }
+      } else if (!typeOnly) {
+        typeOnly = false;
       }
       imports.push({
         specifier: node.moduleSpecifier.text,
@@ -52,9 +60,16 @@ export function parseImports(source, fileName = 'file.ts') {
       node.moduleSpecifier &&
       ts.isStringLiteral(node.moduleSpecifier)
     ) {
+      let typeOnly = node.isTypeOnly;
+      if (!typeOnly && node.exportClause && ts.isNamedExports(node.exportClause)) {
+        const elements = node.exportClause.elements;
+        typeOnly = elements.length > 0 && elements.every(element => element.isTypeOnly);
+      } else if (!typeOnly) {
+        typeOnly = false;
+      }
       imports.push({
         specifier: node.moduleSpecifier.text,
-        typeOnly: node.isTypeOnly,
+        typeOnly,
         line: lineOf(sourceFile, node),
       });
     } else if (
@@ -64,7 +79,7 @@ export function parseImports(source, fileName = 'file.ts') {
     ) {
       imports.push({
         specifier: node.moduleReference.expression.text,
-        typeOnly: false,
+        typeOnly: node.isTypeOnly === true,
         line: lineOf(sourceFile, node),
       });
     } else if (

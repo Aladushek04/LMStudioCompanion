@@ -51,6 +51,39 @@ it('rejects panel runtime imports from memory', () => {
   expect(violation).toMatchObject({ from: 'control-panel', to: 'memory' });
 });
 
+it('rejects a panel default import even when named imports are type-only', () => {
+  const [violation] = check(
+    'packages/control-panel/src/a.tsx',
+    "import Memory, { type MemoryRecord } from '../../memory/src/types.js';",
+  );
+  expect(violation).toMatchObject({ from: 'control-panel', to: 'memory' });
+});
+
+it('rejects a panel namespace import from memory', () => {
+  const [violation] = check(
+    'packages/control-panel/src/a.tsx',
+    "import * as Memory from '../../memory/src/types.js';",
+  );
+  expect(violation).toMatchObject({ from: 'control-panel', to: 'memory' });
+});
+
+it('allows a panel inline type-only re-export', () => {
+  expect(
+    check(
+      'packages/control-panel/src/a.tsx',
+      "export { type MemoryRecord } from '../../memory/src/types.js';",
+    ),
+  ).toEqual([]);
+});
+
+it('rejects a panel export star from memory', () => {
+  const [violation] = check(
+    'packages/control-panel/src/a.tsx',
+    "export * from '../../memory/src/types.js';",
+  );
+  expect(violation).toMatchObject({ from: 'control-panel', to: 'memory' });
+});
+
 it('rejects core importing memory', () => {
   const [violation] = check(
     'packages/core/src/a.ts',
