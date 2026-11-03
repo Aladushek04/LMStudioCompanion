@@ -92,7 +92,8 @@ try {
     guidePath,
     guide.replace(
       /\]\(((?:plans|research)\/[^)]+)\)/g,
-      '](' + 'https://github.com/Aladushek04/LMStudioCompanion/blob/feat/foundation-panel/docs/$1)',
+      // Keep packaged links on the public default branch; a release tag may replace this later.
+      '](' + 'https://github.com/Aladushek04/LMStudioCompanion/blob/main/docs/$1)',
     ),
   );
   await writeFile(join(stage, 'Diagnose-Companion.cmd'), wrapper('Diagnose', true));

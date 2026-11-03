@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { getSessionToken, request, type Snapshot } from './api.js';
 import { Documents } from './features/documents/Documents.js';
 import { Memory } from './features/memory/Memory.js';
+import { appVersion } from './version.js';
 
 const sections = [
   { name: 'Обзор', icon: '◫' },
@@ -329,7 +330,7 @@ export function App() {
           )}
           <footer className="page-footer">
             <span>LM Studio Companion · Локальная панель</span>
-            <span>Companion · 0.1</span>
+            <span>Companion · {appVersion}</span>
           </footer>
         </main>
       </div>

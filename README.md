@@ -50,6 +50,23 @@
 
 Советник запускается отдельно: **Start-Advisor.cmd** — [как пользоваться](packages/advisor/README.md).
 
+## ✅ Проверка исходников
+
+Для разработки нужен **Node 24.22.2** (см. `.nvmrc`; Node 25 тоже проверен). Node 26 блокируется с понятным сообщением.
+
+```powershell
+npm ci
+npm run verify
+```
+
+`verify` проверяет типы, общие и Core-тесты, границы импортов, стиль и сборку. Полный прогон с Python-тестами, Ruff и E2E панели:
+
+```powershell
+npm run verify:full
+```
+
+Отдельные команды: `npm run test:core`, `npm run check:boundaries`, `npm run lint`, `npm run format:check`. Карта модулей и правила импортов — в [docs/CODEMAP.md](docs/CODEMAP.md).
+
 ## 🗺️ Roadmap
 
 | Этап | Статус | Результат |
