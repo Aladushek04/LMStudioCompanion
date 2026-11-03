@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=22.21.1"
+    "node": ">=24 <26"
   },
   "scripts": {
     "test": "vitest run",
@@ -15,7 +15,11 @@
     "test:panel": "node scripts/check-panel.mjs",
     "test:memory-panel": "node scripts/check-memory-panel.mjs",
     "package": "node scripts/package.mjs",
-    "test:release": "node scripts/check-release.mjs"
+    "test:release": "node scripts/check-release.mjs",
+    "verify": "node scripts/verify.mjs",
+    "verify:full": "node scripts/verify.mjs --full",
+    "test:core": "node node_modules/vitest/vitest.mjs run --config packages/conversation-engine/vitest.config.mts --maxWorkers=1 --no-file-parallelism",
+    "check:node": "node scripts/check-node.mjs"
   },
   "dependencies": {
     "@lmstudio/sdk": "1.5.0",
