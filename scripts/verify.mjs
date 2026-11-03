@@ -11,17 +11,32 @@ const steps = [];
 
 steps.push(['Node', node, [at('scripts/check-node.mjs')]]);
 steps.push(['TypeScript (root)', node, [at('node_modules/typescript/bin/tsc'), '--noEmit']]);
-steps.push(['TypeScript (Core)', node, [at('node_modules/typescript/bin/tsc'), '-p', 'packages/conversation-engine/tsconfig.json']]);
+steps.push([
+  'TypeScript (Core)',
+  node,
+  [at('node_modules/typescript/bin/tsc'), '-p', 'packages/conversation-engine/tsconfig.json'],
+]);
 steps.push(['Unit tests', node, [at('node_modules/vitest/vitest.mjs'), 'run']]);
-steps.push(['Core tests', node, [at('node_modules/vitest/vitest.mjs'), 'run', '--config', 'packages/conversation-engine/vitest.config.mts', '--maxWorkers=1', '--no-file-parallelism']]);
+steps.push([
+  'Core tests',
+  node,
+  [
+    at('node_modules/vitest/vitest.mjs'),
+    'run',
+    '--config',
+    'packages/conversation-engine/vitest.config.mts',
+    '--maxWorkers=1',
+    '--no-file-parallelism',
+  ],
+]);
 
 if (existsSync(at('scripts/check-boundaries.mjs'))) {
   steps.push(['Import boundaries', node, [at('scripts/check-boundaries.mjs')]]);
 }
 
-const biome = at(process.platform === 'win32' ? 'node_modules/.bin/biome.cmd' : 'node_modules/.bin/biome');
+const biome = at('node_modules/@biomejs/biome/bin/biome');
 if (existsSync(biome)) {
-  steps.push(['Style (Biome)', biome, ['check', '.']]);
+  steps.push(['Style (Biome)', node, [biome, 'check', '.']]);
 }
 
 steps.push(['Build', node, [at('scripts/build.mjs')]]);

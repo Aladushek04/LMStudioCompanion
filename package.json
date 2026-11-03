@@ -19,7 +19,11 @@
     "verify": "node scripts/verify.mjs",
     "verify:full": "node scripts/verify.mjs --full",
     "test:core": "node node_modules/vitest/vitest.mjs run --config packages/conversation-engine/vitest.config.mts --maxWorkers=1 --no-file-parallelism",
-    "check:node": "node scripts/check-node.mjs"
+    "check:node": "node scripts/check-node.mjs",
+    "lint": "biome lint .",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "check": "biome check ."
   },
   "dependencies": {
     "@lmstudio/sdk": "1.5.0",
@@ -28,6 +32,7 @@
     "zod": "3.25.76"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.6.4",
     "@types/node": "22.20.1",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",

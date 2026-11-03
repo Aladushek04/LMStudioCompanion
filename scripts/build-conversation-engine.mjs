@@ -1,18 +1,59 @@
-import {build} from 'esbuild';
-import {copyFile,mkdir,readFile,writeFile} from 'node:fs/promises';
-import {createHash} from 'node:crypto';
-import {fileURLToPath} from 'node:url';
-import {resolve} from 'node:path';
-const root=fileURLToPath(new URL('../',import.meta.url));
-const source=resolve(root,'packages/conversation-engine');
-const target=resolve(root,'.tools/companion-core');
-await mkdir(resolve(target,'src'),{recursive:true});
-await build({entryPoints:[resolve(source,'src/index.ts')],outfile:resolve(target,'src/index.ts'),bundle:true,platform:'node',format:'cjs',target:'node24',external:['@lmstudio/sdk']});
-for(const file of ['manifest.json','package.json','package-lock.json','LICENSE','UPSTREAM.json','README.md','THIRD-PARTY-NOTICES.md'])await copyFile(resolve(source,file),resolve(target,file));
-await mkdir(resolve(target,'licenses'),{recursive:true});
-await copyFile(resolve(root,'node_modules/zod/LICENSE'),resolve(target,'licenses/zod-LICENSE.txt'));
-const manifest=JSON.parse(await readFile(resolve(source,'manifest.json'),'utf8'));
-const pkg=JSON.parse(await readFile(resolve(source,'package.json'),'utf8'));
-const sha256=createHash('sha256').update(await readFile(resolve(target,'src/index.ts'))).digest('hex');
-await writeFile(resolve(target,'build-manifest.json'),JSON.stringify({id:manifest.owner+'/'+manifest.name,version:pkg.version,revision:manifest.revision,sha256,sdk:pkg.dependencies['@lmstudio/sdk'],buildNode:process.version},null,2));
-console.log('Собран локальный кандидат Companion Core: '+target+'; установка и переключение LM Studio не выполнялись.');
+import { createHash } from 'node:crypto';
+import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { build } from 'esbuild';
+
+const root = fileURLToPath(new URL('../', import.meta.url));
+const source = resolve(root, 'packages/conversation-engine');
+const target = resolve(root, '.tools/companion-core');
+await mkdir(resolve(target, 'src'), { recursive: true });
+await build({
+  entryPoints: [resolve(source, 'src/index.ts')],
+  outfile: resolve(target, 'src/index.ts'),
+  bundle: true,
+  platform: 'node',
+  format: 'cjs',
+  target: 'node24',
+  external: ['@lmstudio/sdk'],
+});
+for (const file of [
+  'manifest.json',
+  'package.json',
+  'package-lock.json',
+  'LICENSE',
+  'UPSTREAM.json',
+  'README.md',
+  'THIRD-PARTY-NOTICES.md',
+])
+  await copyFile(resolve(source, file), resolve(target, file));
+await mkdir(resolve(target, 'licenses'), { recursive: true });
+await copyFile(
+  resolve(root, 'node_modules/zod/LICENSE'),
+  resolve(target, 'licenses/zod-LICENSE.txt'),
+);
+const manifest = JSON.parse(await readFile(resolve(source, 'manifest.json'), 'utf8'));
+const pkg = JSON.parse(await readFile(resolve(source, 'package.json'), 'utf8'));
+const sha256 = createHash('sha256')
+  .update(await readFile(resolve(target, 'src/index.ts')))
+  .digest('hex');
+await writeFile(
+  resolve(target, 'build-manifest.json'),
+  JSON.stringify(
+    {
+      id: manifest.owner + '/' + manifest.name,
+      version: pkg.version,
+      revision: manifest.revision,
+      sha256,
+      sdk: pkg.dependencies['@lmstudio/sdk'],
+      buildNode: process.version,
+    },
+    null,
+    2,
+  ),
+);
+console.log(
+  'Собран локальный кандидат Companion Core: ' +
+    target +
+    '; установка и переключение LM Studio не выполнялись.',
+);

@@ -24,10 +24,7 @@
   ],
   "independentPdfCheck": {
     "textPages": 2,
-    "textMarkers": [
-      "MINT-482",
-      "ORBIT-936"
-    ],
+    "textMarkers": ["MINT-482", "ORBIT-936"],
     "scanPages": 1,
     "scanTextChars": 0,
     "scanImages": 1
