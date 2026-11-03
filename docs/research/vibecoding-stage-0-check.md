@@ -74,11 +74,21 @@
 | Import boundaries | **108 files, 0 violations** |
 | Biome lint/format | **0 errors** |
 
+## Финальное ревью
+
+Независимый reviewer нашёл два Important-дефекта:
+
+1. Boundary checker принимал `import Foo, { type Bar }` за type-only и неверно классифицировал `export { type X }`. Исправлено; добавлены 5 регрессионных тестов.
+2. `verify` мог молча пропустить boundaries/Biome/Python, если файл отсутствует. Теперь обязательные шаги добавляются безусловно; `buildSteps` покрыт тестами.
+
+Дополнительно исправлены: счётчик 108 файлов, `requirements`-ссылки в релизном USER-GUIDE, упоминание Node 24 в STATUS, тесты pre-aborted и late-abort для `abortable`, полнота ledger.
+
 ## CI
 
 - Первый run: `41686322503` — failure из-за отсутствия Python venv.
 - Второй run: `41686901715` — failure из-за относительного пути к venv внутри `packages/web-tools`.
-- Финальный run: **`41687411316` — успешно за 2m28s** на `windows-latest`: Node 24, `npm ci`, `npm run verify`, pytest, Ruff, panel E2E.
+- Третий run: `41687411316` — успешно после исправления пути.
+- Финальный run: **`41692876963` — успешно за 2m27s** на `windows-latest` после ужесточения boundary checker и `verify`: Node 24, `npm ci`, `npm run verify`, pytest, Ruff, panel E2E.
 - Осталось предупреждение GitHub Actions о Node 20 в используемых action-версиях; это не влияет на проверки и вынесено в отложенные мелочи.
 
 ## Аудит зависимостей
