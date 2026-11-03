@@ -20,6 +20,7 @@
     "verify:full": "node scripts/verify.mjs --full",
     "test:core": "node node_modules/vitest/vitest.mjs run --config packages/conversation-engine/vitest.config.mts --maxWorkers=1 --no-file-parallelism",
     "check:node": "node scripts/check-node.mjs",
+    "check:boundaries": "node scripts/check-boundaries.mjs",
     "lint": "biome lint .",
     "format": "biome format --write .",
     "format:check": "biome format .",

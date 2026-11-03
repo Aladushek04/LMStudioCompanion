@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdir, rename, rm, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { selectIntegration } from '../../lmstudio-plugin/src/integration.js';
+import { selectIntegration } from '../../core/src/integration.js';
 import { type ProbeOptions, probeCapabilities } from './capabilities.js';
 
 interface DiagnosticOptions extends ProbeOptions {

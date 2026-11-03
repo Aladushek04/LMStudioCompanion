@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import type { OperationResult } from '../../../../core/src/contracts.js';
-import type { MigrationPreview } from '../../../../host/src/memory-migration.js';
+import type { MigrationPreview } from '../../../../memory/src/migration-types.js';
 import { previewOfflineMigration, request } from '../../api.js';
 
 interface Status {

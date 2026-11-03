@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { decodeLegacy } from '../../memory/src/migration.js';
+import type { MigrationPreview } from '../../memory/src/migration-types.js';
 import type { MemoryStore } from '../../memory/src/store.js';
 import type { MemoryRecord } from '../../memory/src/types.js';
 
@@ -14,14 +15,6 @@ const applySchema = z
 const undoSchema = z
   .object({ id: z.string().uuid(), expectedRevision: z.number().int().nonnegative() })
   .strict();
-export interface MigrationPreview {
-  id: string;
-  baseRevision: number;
-  sourceCount: number;
-  skippedSessions: number;
-  alreadyPresent: number;
-  records: Pick<MemoryRecord, 'id' | 'content' | 'scope' | 'projectId' | 'category' | 'source'>[];
-}
 type Response = { status: number; body: unknown };
 const fail = (status: number, message: string): Response => ({ status, body: { message } });
 export function createMigrationService(get: () => Promise<MemoryStore>) {

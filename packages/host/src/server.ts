@@ -5,8 +5,8 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { type CapabilityReport, capabilityReportSchema } from '../../core/src/contracts.js';
+import { selectIntegration } from '../../core/src/integration.js';
 import { settingsSchema } from '../../core/src/settings.js';
-import { selectIntegration } from '../../lmstudio-plugin/src/integration.js';
 import type { StoreOptions } from '../../memory/src/store.js';
 import { probeCapabilities } from './capabilities.js';
 import type { DocumentsOptions } from './document-workspaces.js';

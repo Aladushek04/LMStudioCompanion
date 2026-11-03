@@ -2,7 +2,7 @@ import {Chat,type PredictionLoopHandlerController} from '@lmstudio/sdk';
 import {z} from 'zod';
 import type {CoreTurn} from './turn';
 import {waitForCoreStep} from './turn';
-import {memoryRequest} from '../../../lmstudio-plugin/src/memory/client.js';
+import {memoryRequest} from '../../../memory/src/channel-client.js';
 import {configSchematics} from '../config';
 import {prepareMemorySave,memoryOutcomeText} from './memory-tools';
 import {extractPayload} from '../reasoning';

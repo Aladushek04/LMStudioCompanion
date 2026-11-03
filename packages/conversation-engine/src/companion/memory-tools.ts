@@ -1,7 +1,7 @@
 import {rawFunctionTool} from '@lmstudio/sdk';
 import {randomUUID} from 'node:crypto';
 import {z} from 'zod';
-import {memoryRequest} from '../../../lmstudio-plugin/src/memory/client.js';
+import {memoryRequest} from '../../../memory/src/channel-client.js';
 import {saveGrantSchema} from '../../../memory/src/channel-protocol.js';
 import {memoryReceiptSchema,normalizeNoteText,receipt,type MemoryReceipt} from '../../../memory/src/operations.js';
 
