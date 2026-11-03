@@ -38,10 +38,10 @@ jobs:
 
       - run: npm run verify
 
-      - run: .tools/web-venv/Scripts/python.exe -m pytest tests -q
+      - run: ../../.tools/web-venv/Scripts/python.exe -m pytest tests -q
         working-directory: packages/web-tools
 
-      - run: .tools/web-venv/Scripts/python.exe -m ruff check .
+      - run: ../../.tools/web-venv/Scripts/python.exe -m ruff check .
         working-directory: packages/web-tools
 
       - run: npm run test:panel
