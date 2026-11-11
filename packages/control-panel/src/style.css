@@ -17,7 +17,7 @@
 .memory-record-meta { display:flex; flex-wrap:wrap; gap:.5rem 1rem; color:#58665c; font-size:.875rem; }
 .memory-text { white-space:pre-wrap; color:#28352e; margin-block:1rem; }
 .memory-hint { font-size:.9rem; }
-.memory-status { min-height:1.5em; }
+.memory-status { min-height:1.5em; font-weight:600; color:#365d45; }
 .memory dialog { width:min(34rem,calc(100% - 2rem)); max-height:calc(100% - 2rem); overflow:auto; border:1px solid #87968b; border-radius:.75rem; padding:1.5rem; color:#28352e; }
 .memory dialog:modal { overscroll-behavior:contain; }
 .memory dialog::backdrop { background:#14251c88; overflow:hidden; overscroll-behavior:contain; }

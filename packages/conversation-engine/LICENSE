@@ -1,0 +1,62 @@
+Context Compressor Community License 1.0
+
+Copyright (c) 2026 RootMonsteR
+
+TL;DR: Free for personal use and for internal professional/business use.
+Putting this software (or a derivative of it) inside a product or service
+that people pay for requires a separate commercial license from the
+copyright holder.
+
+1. Grant
+
+Subject to the terms below, the copyright holder grants you a worldwide,
+royalty-free, non-exclusive license to use, copy, modify, and self-host
+this software and derivative works of it for:
+
+  a. Personal use; and
+  b. Internal professional or business use (use by you or your
+     organization in the course of work, where the software itself is not
+     sold, resold, licensed for a fee, or offered as part of a paid
+     product or paid service).
+
+2. Redistribution
+
+You may redistribute this software or derivative works free of charge,
+provided you retain this license text, the copyright notice, and clear
+attribution to the original project
+(https://lmstudio.ai/rootmonster/context-compressor).
+
+3. Commercial use restriction
+
+You may NOT, without a separate written commercial license agreement with
+the copyright holder:
+
+  a. Sell, resell, or license this software or a derivative work for a
+     fee;
+  b. Incorporate this software or a derivative work into a product or
+     service that is sold, subscribed to, or otherwise paid for; or
+  c. Offer this software's functionality as a paid hosted or managed
+     service.
+
+To obtain a commercial license, contact the copyright holder:
+https://github.com/rootMonsteR or via the LM Studio Hub profile
+(https://lmstudio.ai/rootmonster).
+
+4. Termination
+
+This license terminates automatically if you breach it. Rights are
+reinstated if the breach is cured within 30 days of becoming aware of it.
+
+5. No warranty
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+
+Note: versions of this software published as Hub revisions 1 through 15
+were released under the MIT License; that grant remains valid for those
+copies. This license applies to this and later versions.
